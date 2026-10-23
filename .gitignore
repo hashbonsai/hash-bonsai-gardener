@@ -1,0 +1,9 @@
+node_modules/
+dist/
+
+# Never commit the config or any secret value it points to.
+config.json
+*.key
+.env
+.env.*
+state.json
