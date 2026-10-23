@@ -31,6 +31,60 @@ describe('assertAllowed', () => {
     expect(() => assertAllowed(tx, policy)).not.toThrow()
   })
 
+  describe('the Walrus storage transaction as the SDK builds it', () => {
+    const WAL = '0x' + '55'.repeat(32) + '::wal::WAL'
+
+    function storageTransaction(over: { change?: string; from?: 'sender' | 'sponsor' } = {}): Transaction {
+      const tx = base()
+      const funds = tx.withdrawal({ amount: 1000, type: WAL, from: over.from ?? 'sender' })
+      const [payment] = tx.moveCall({ target: '0x2::coin::redeem_funds', typeArguments: [WAL], arguments: [funds] })
+      const [part] = tx.splitCoins(payment, [500])
+      tx.moveCall({ target: '0x2::coin::send_funds', typeArguments: [WAL], arguments: [payment, tx.pure.address(over.change ?? ME)] })
+      const [space] = tx.moveCall({ target: `${WALRUS}::system::reserve_space`, arguments: [part] })
+      tx.moveCall({ target: '0x2::coin::destroy_zero', typeArguments: [WAL], arguments: [part] })
+      const [blob] = tx.moveCall({ target: `${WALRUS}::system::register_blob`, arguments: [space] })
+      tx.moveCall({ target: '0x2::coin::destroy_zero', typeArguments: [WAL], arguments: [part] })
+      tx.transferObjects([blob], tx.pure.address(ME))
+      return tx
+    }
+
+    it('lets the whole first transaction through, and the certify call', () => {
+      expect(() => assertAllowed(storageTransaction(), policy)).not.toThrow()
+      const certify = base()
+      certify.moveCall({ target: `${WALRUS}::system::certify_blob`, arguments: [certify.object(REF.objectId)] })
+      expect(() => assertAllowed(certify, policy)).not.toThrow()
+    })
+
+    it('refuses the change being sent to someone else', () => {
+      expect(() => assertAllowed(storageTransaction({ change: OTHER }), policy)).toThrow(/sent back to the gardener/)
+    })
+
+    it('refuses sending funds to a recipient that is computed rather than a plain address', () => {
+      const tx = base()
+      const [coin] = tx.moveCall({ target: '0x2::coin::redeem_funds', typeArguments: [WAL], arguments: [tx.withdrawal({ amount: 1, type: WAL })] })
+      const [who] = tx.moveCall({ target: `${WALRUS}::system::something`, arguments: [] })
+      tx.moveCall({ target: '0x2::coin::send_funds', typeArguments: [WAL], arguments: [coin, who] })
+      expect(() => assertAllowed(tx, policy)).toThrow(/plain address/)
+    })
+
+    it('refuses sending funds with no recipient at all', () => {
+      const tx = base()
+      const [coin] = tx.moveCall({ target: '0x2::coin::redeem_funds', typeArguments: [WAL], arguments: [tx.withdrawal({ amount: 1, type: WAL })] })
+      tx.moveCall({ target: '0x2::coin::send_funds', typeArguments: [WAL], arguments: [coin] })
+      expect(() => assertAllowed(tx, policy)).toThrow(/sent back to the gardener/)
+    })
+
+    it('refuses a withdrawal from anyone but the gardener', () => {
+      expect(() => assertAllowed(storageTransaction({ from: 'sponsor' }), policy)).toThrow(/gardener's own balance/)
+    })
+
+    it('refuses framework coin calls the SDK was not seen to use', () => {
+      const tx = base()
+      tx.moveCall({ target: '0x2::coin::from_balance', typeArguments: [WAL], arguments: [] })
+      expect(() => assertAllowed(tx, policy)).toThrow(/not on the gardener's allowlist/)
+    })
+  })
+
   it('refuses a call into the game package', () => {
     const tx = base()
     tx.moveCall({ target: `${GAME}::bonsai::harvest_to_sender`, arguments: [] })

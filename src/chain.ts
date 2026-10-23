@@ -15,18 +15,17 @@ export type SendPolicy = {
 const FRAMEWORK = normalizeSuiAddress('0x2')
 
 /**
- * Framework functions that moving WAL and SUI between coins needs. Nothing here
- * can send value to another address; a Walrus call that turns out to need one
- * more is refused with its name, and is added here only after being read.
+ * The framework functions the Walrus SDK's storage transaction really uses,
+ * read off a mainnet run of it: take the payment out of the address balance,
+ * return the change to it, and throw away the empty coins. `send_funds` is the
+ * one that can move value to someone else, so its recipient is checked
+ * separately. A call that turns out to need one more is refused with its name
+ * and is added here only after being read.
  */
-const FRAMEWORK_CALLS = new Set([
-  'coin::zero',
-  'coin::destroy_zero',
-  'coin::from_balance',
-  'coin::into_balance',
-  'coin::join',
-  'coin::split',
-])
+const FRAMEWORK_CALLS = new Set(['coin::redeem_funds', 'coin::send_funds', 'coin::destroy_zero'])
+
+/** `coin::send_funds(coin, recipient)`: the position of the recipient. */
+const SEND_FUNDS_RECIPIENT = 1
 
 /** A stored report must outlive the operator's wishes, so nothing that deletes a Blob is ever signed. */
 const isDeletion = (fn: string) => fn.startsWith('delete') || fn.includes('burn')
@@ -35,9 +34,9 @@ type Data = ReturnType<Transaction['getData']>
 type Argument = Extract<Data['commands'][number], { $kind: 'TransferObjects' }>['TransferObjects']['address']
 
 function pureAddress(data: Data, arg: Argument): string {
-  if (arg.$kind !== 'Input') throw new Error(`refused: a transfer's recipient must be a plain address, not ${arg.$kind}`)
+  if (arg.$kind !== 'Input') throw new Error(`refused: a recipient must be a plain address, not ${arg.$kind}`)
   const input = data.inputs[arg.Input]
-  if (!input || input.$kind !== 'Pure') throw new Error('refused: a transfer\'s recipient must be a plain address')
+  if (!input || input.$kind !== 'Pure') throw new Error('refused: a recipient must be a plain address')
   return normalizeSuiAddress(bcs.Address.parse(fromBase64(input.Pure.bytes)))
 }
 
@@ -56,6 +55,12 @@ export function assertAllowed(tx: Transaction, policy: SendPolicy): void {
   const gasOwner = data.gasData.owner
   if (gasOwner && normalizeSuiAddress(gasOwner) !== me) throw new Error('refused: the gas is not paid by the gardener')
 
+  for (const input of data.inputs) {
+    if (input.$kind === 'FundsWithdrawal' && input.FundsWithdrawal.withdrawFrom.$kind !== 'Sender') {
+      throw new Error('refused: funds may only be withdrawn from the gardener\'s own balance')
+    }
+  }
+
   for (const command of data.commands) {
     switch (command.$kind) {
       case 'MoveCall': {
@@ -65,6 +70,10 @@ export function assertAllowed(tx: Transaction, policy: SendPolicy): void {
         if (isDeletion(c.function)) throw new Error(`refused: ${target} would delete or burn`)
         const ok = walrus.has(pkg) || (pkg === FRAMEWORK && FRAMEWORK_CALLS.has(`${c.module}::${c.function}`))
         if (!ok) throw new Error(`refused: ${target} is not on the gardener's allowlist`)
+        if (pkg === FRAMEWORK && c.function === 'send_funds') {
+          const recipient = c.arguments[SEND_FUNDS_RECIPIENT]
+          if (!recipient || pureAddress(data, recipient) !== me) throw new Error('refused: funds may only be sent back to the gardener itself')
+        }
         break
       }
       case 'SplitCoins':
