@@ -10,6 +10,7 @@
 // Prints only the gRPC host and the balance read back — never the key.
 import { readFileSync } from 'node:fs'
 import { createTatumClient } from '../src/tatum'
+import { TATUM_THROTTLE } from '../src/throttle'
 
 function arg(name: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -24,7 +25,10 @@ async function main() {
   const address = arg('address')
 
   const apiKey = readFileSync(keyFile, 'utf8').trim()
-  const tatum = createTatumClient(network, apiKey)
+  const tatum = createTatumClient(network, apiKey, {
+    ...TATUM_THROTTLE,
+    onRetry: ({ attempt, waitMs }) => console.log(`  Tatum answered 429; waiting ${waitMs} ms (retry ${attempt})`),
+  })
 
   console.log(`checking Tatum gRPC: ${tatum.host}`)
   try {

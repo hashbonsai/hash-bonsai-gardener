@@ -1,6 +1,7 @@
 import { ChannelCredentials } from '@grpc/grpc-js'
 import { SuiGrpcClient } from '@mysten/sui/grpc'
 import { GrpcTransport, type GrpcOptions } from '@protobuf-ts/grpc-transport'
+import { TATUM_THROTTLE, throttleInterceptor, type ThrottleOptions } from './throttle'
 
 export type Network = 'mainnet' | 'testnet'
 
@@ -15,12 +16,17 @@ export const TATUM_HOST: Record<Network, string> = {
   testnet: 'sui-testnet-grpc.gateway.tatum.io:443',
 }
 
-/** The transport options, separate from the client so a test can read them without a network. */
-export function tatumTransportOptions(network: Network, apiKey: string): GrpcOptions {
+/**
+ * The transport options, separate from the client so a test can read them
+ * without a network. Calls are spaced to stay under the plan's request rate and
+ * a rate-limited call is tried again after a wait (see `throttle.ts`).
+ */
+export function tatumTransportOptions(network: Network, apiKey: string, throttle: ThrottleOptions = TATUM_THROTTLE): GrpcOptions {
   return {
     host: TATUM_HOST[network],
     channelCredentials: ChannelCredentials.createSsl(),
     meta: { 'x-api-key': apiKey },
+    interceptors: [throttleInterceptor(throttle)],
   }
 }
 
@@ -31,8 +37,8 @@ export type TatumClient = {
   close: () => void
 }
 
-export function createTatumClient(network: Network, apiKey: string): TatumClient {
-  const transport = new GrpcTransport(tatumTransportOptions(network, apiKey))
+export function createTatumClient(network: Network, apiKey: string, throttle: ThrottleOptions = TATUM_THROTTLE): TatumClient {
+  const transport = new GrpcTransport(tatumTransportOptions(network, apiKey, throttle))
   const client = new SuiGrpcClient({ network, transport })
   return { client, host: TATUM_HOST[network], close: () => transport.close() }
 }

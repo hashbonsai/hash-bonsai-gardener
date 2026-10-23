@@ -27,6 +27,7 @@ import { Transaction } from '@mysten/sui/transactions'
 import { normalizeSuiAddress } from '@mysten/sui/utils'
 import { WalrusClient } from '@mysten/walrus'
 import { createTatumClient } from '../src/tatum'
+import { TATUM_THROTTLE } from '../src/throttle'
 
 /**
  * Signs like the key it wraps and prints what each transaction contains
@@ -85,7 +86,10 @@ async function main() {
   const keypair = Ed25519Keypair.fromSecretKey(secret)
   const address = normalizeSuiAddress(keypair.toSuiAddress())
 
-  const tatum = createTatumClient(network, tatumKey)
+  const tatum = createTatumClient(network, tatumKey, {
+    ...TATUM_THROTTLE,
+    onRetry: ({ attempt, waitMs }) => console.log(`  Tatum answered 429; waiting ${waitMs} ms (retry ${attempt})`),
+  })
   const walrus = new WalrusClient({ network, suiClient: tatum.client })
 
   const text = `gardener Walrus check, ${new Date().toISOString()}, safe to ignore — this blob cannot be deleted.`
