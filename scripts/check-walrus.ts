@@ -16,13 +16,54 @@
 //     --tatum-key-file ~/.config/the-gardener/tatum-api-key \
 //     --epochs 3 --confirm-permanent
 //
-// Prints the blob id and the transaction digest — both public once sent —
-// never either key.
+// Prints the blob id, the blob object id, and the shape of each transaction it
+// signs (which packages and functions it calls) — all public once sent — never
+// either key. Paste that shape back so the allowlist in src/chain.ts can be
+// checked against what the Walrus SDK really builds.
 import { readFileSync } from 'node:fs'
+import { Signer, type SignatureWithBytes, type IntentScope } from '@mysten/sui/cryptography'
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
+import { Transaction } from '@mysten/sui/transactions'
 import { normalizeSuiAddress } from '@mysten/sui/utils'
 import { WalrusClient } from '@mysten/walrus'
 import { createTatumClient } from '../src/tatum'
+
+/**
+ * Signs like the key it wraps and prints what each transaction contains
+ * (package, module and function of every call, the kind of every other
+ * command), so the outgoing-transaction allowlist in src/chain.ts can be
+ * checked against what the Walrus SDK really builds. Only public structure is
+ * printed, never a key.
+ */
+class ObservingSigner extends Signer {
+  constructor(private readonly inner: Ed25519Keypair) {
+    super()
+  }
+  override async signWithIntent(bytes: Uint8Array, intent: IntentScope): Promise<SignatureWithBytes> {
+    if (intent === 'TransactionData') {
+      const data = Transaction.from(bytes).getData()
+      console.log(`  tx to sign, sender ${data.sender}, gas owner ${data.gasData.owner ?? '(sender)'}:`)
+      for (const c of data.commands) {
+        if (c.$kind === 'MoveCall') console.log(`    call ${normalizeSuiAddress(c.MoveCall.package)}::${c.MoveCall.module}::${c.MoveCall.function}`)
+        else if (c.$kind === 'TransferObjects') {
+          const to = c.TransferObjects.address
+          const input = to.$kind === 'Input' ? data.inputs[to.Input] : null
+          console.log(`    TransferObjects, recipient ${input?.$kind === 'Pure' ? 'a plain address input' : to.$kind}`)
+        } else console.log(`    ${c.$kind}`)
+      }
+    }
+    return this.inner.signWithIntent(bytes, intent)
+  }
+  sign(bytes: Uint8Array) {
+    return this.inner.sign(bytes)
+  }
+  getKeyScheme() {
+    return this.inner.getKeyScheme()
+  }
+  getPublicKey() {
+    return this.inner.getPublicKey()
+  }
+}
 
 function arg(name: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -54,7 +95,7 @@ async function main() {
       blob: new TextEncoder().encode(text),
       deletable: false,
       epochs,
-      signer: keypair,
+      signer: new ObservingSigner(keypair),
     })
 
     console.log(`ok — blob ${blobId}`)
