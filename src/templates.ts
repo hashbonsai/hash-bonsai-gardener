@@ -162,10 +162,17 @@ export function voteResult(lang: Lang, ballotEpoch: number, quorumMet: boolean, 
 
 // ── Fallback and assembly ─────────────────────────────────────────────────
 
-/** Why a report has no commentary: the text failed its checks, or no usable text could be had from the model. */
-export type FallbackReason = 'checks' | 'unavailable'
+/**
+ * Why a report has no commentary: the text failed its checks, no usable text could be had from
+ * the model, or the operator read the draft and withheld it.
+ */
+export type FallbackReason = 'checks' | 'unavailable' | 'withheld'
 
 const FALLBACK_NOTE: Record<FallbackReason, Record<Lang, string>> = {
+  withheld: {
+    en: 'This week’s commentary was withheld by the operator, so only the figures are shown.',
+    ja: '今回の講評は運営が見送ったため、数字のみを掲載します。',
+  },
   checks: {
     en: 'This week’s commentary did not pass its checks, so only the figures are shown.',
     ja: '今回の講評は検査に通らなかったため、数字のみを掲載します。',

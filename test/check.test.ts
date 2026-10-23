@@ -34,6 +34,19 @@ describe('numbers the prose may use', () => {
   it('allows a short form of a fact', () => {
     expect(bad('about 8.5k BONEXP')).toEqual([])
   })
+  it('matches a fact only within half of the last place the number is written to', () => {
+    const allowedFor = (...facts: number[]) => (text: string) => disallowedNumbers(text, facts).map((n) => n.text)
+    const is = allowedFor(100, 8500.5, 7.178)
+    // A whole number is not "near" another whole number.
+    expect(is('99 players')).toEqual(['99'])
+    expect(is('101 players')).toEqual(['101'])
+    expect(is('100 players')).toEqual([])
+    // But it may be a fact rounded to that place.
+    expect(is('8,500 and 8,501')).toEqual([])
+    expect(is('8,499 and 8,502')).toEqual(['8,499', '8,502'])
+    expect(is('7.18 and 7.2 and 7.178')).toEqual([])
+    expect(is('7.19 and 7.1')).toEqual(['7.19', '7.1'])
+  })
   it('rejects a number that is in no fact', () => {
     expect(bad('37 players')).toEqual(['37'])
   })

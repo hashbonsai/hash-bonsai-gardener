@@ -199,7 +199,12 @@ export async function recallForEpoch(store: MemoryStore): Promise<Recalled> {
   return { observations: observations.slice(0, 10), notes: notes.slice(0, 5), blobIds }
 }
 
-export type WriteOutcome = { written: string[]; failed: number }
+export type WriteOutcome = {
+  written: string[]
+  failed: number
+  /** The records that did not go in, to try again next round. */
+  failedTexts: string[]
+}
 
 /**
  * Writes records one at a time. A relay that fails loses only that record and
@@ -208,14 +213,14 @@ export type WriteOutcome = { written: string[]; failed: number }
  */
 export async function writeRecords(store: MemoryStore, texts: string[]): Promise<WriteOutcome> {
   const written: string[] = []
-  let failed = 0
+  const failedTexts: string[] = []
   for (const t of texts) {
     try {
       const r = await store.remember(t)
       written.push(r.blobId)
     } catch {
-      failed++
+      failedTexts.push(t)
     }
   }
-  return { written, failed }
+  return { written, failed: failedTexts.length, failedTexts }
 }

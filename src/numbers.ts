@@ -4,7 +4,7 @@ export type FoundNumber = {
   /** The text as written, for the failure report. */
   text: string
   value: number
-  /** How closely the writer pinned it: 10^-decimals × the suffix multiplier. */
+  /** The size of the last place it is written to: 10^-decimals × the suffix multiplier. */
   tolerance: number
 }
 
@@ -52,8 +52,13 @@ export function allowedNumbers(facts: Facts, derived: number[] = []): number[] {
   return out
 }
 
+/**
+ * A number as written stands for every value that rounds to it: "99" for 98.5 up to 99.5, "7.18"
+ * for 7.175 up to 7.185. So it matches a fact within half of the last place it is written to — not
+ * a whole place, which would let "99" pass for a fact of 100.
+ */
 export function isAllowed(found: FoundNumber, allowed: number[]): boolean {
-  return allowed.some((a) => Math.abs(found.value - a) <= found.tolerance + 1e-9)
+  return allowed.some((a) => Math.abs(found.value - a) <= found.tolerance / 2 + 1e-9)
 }
 
 export function disallowedNumbers(text: string, allowed: number[]): FoundNumber[] {

@@ -129,7 +129,7 @@ describe('writeRecords', () => {
   it('returns the blob id of each record it wrote', async () => {
     const store = fakeStore()
     const out = await writeRecords(store, [records.observation(observation()), records.followup(followup())])
-    expect(out).toEqual({ written: ['blob-1', 'blob-2'], failed: 0 })
+    expect(out).toEqual({ written: ['blob-1', 'blob-2'], failed: 0, failedTexts: [] })
   })
   it('counts a failed write instead of throwing, and carries on with the rest', async () => {
     let n = 0
@@ -145,7 +145,8 @@ describe('writeRecords', () => {
         return 0
       },
     }
-    expect(await writeRecords(store, ['a', 'b', 'c'])).toEqual({ written: ['ok', 'ok'], failed: 1 })
+    // The record that did not go in comes back as text, so it can be tried again.
+    expect(await writeRecords(store, ['a', 'b', 'c'])).toEqual({ written: ['ok', 'ok'], failed: 1, failedTexts: ['a'] })
   })
 })
 
