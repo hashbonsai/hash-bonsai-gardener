@@ -1,5 +1,5 @@
 import { allowedNumbers, disallowedNumbers } from './numbers'
-import { forbiddenWordIn, LIMITS, voteWordIn } from './policy'
+import { forbiddenTermJaIn, forbiddenWordIn, LIMITS, numberWordIn, voteWordIn } from './policy'
 import { OBSERVATION_METRICS, type Direction, type Facts, type LlmReport, type Observation, type ObservationMetric, type RawObservation } from './types'
 import { metricValue } from './learn'
 
@@ -48,6 +48,7 @@ export function acceptObservations(raw: RawObservation[], facts: Facts, allowed:
     if (!(OBSERVATION_METRICS as readonly string[]).includes(r.metric)) continue
     if (!DIRECTIONS.includes(r.direction as Direction)) continue
     if (forbiddenWordIn(r.statement) || voteWordIn(r.statement)) continue
+    if (numberWordIn(r.statement) || forbiddenTermJaIn(r.statement)) continue
     if (disallowedNumbers(r.statement, allowed).length > 0) continue
     if (badAddresses(r.statement, shortOk).length > 0) continue
     const metric = r.metric as ObservationMetric
@@ -84,6 +85,10 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     if (word) reasons.push(`${name}: forbidden word "${word}"`)
     const vote = voteWordIn(text)
     if (vote) reasons.push(`${name}: mentions voting ("${vote}")`)
+    const written = numberWordIn(text)
+    if (written) reasons.push(`${name}: number written as a word ("${written}"); write every number in digits`)
+    const term = name === 'ja' ? forbiddenTermJaIn(text) : null
+    if (term) reasons.push(`ja: house style does not allow "${term}" (write Bonsai in English letters, and シーズン for an epoch)`)
     for (const n of disallowedNumbers(text, allowed)) reasons.push(`${name}: number "${n.text}" is not in the facts`)
     for (const a of badAddresses(text, shortOk)) reasons.push(`${name}: address ${a} is not one of the top three`)
   }

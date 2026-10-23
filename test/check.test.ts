@@ -91,6 +91,57 @@ describe('checkReport', () => {
     expect(checkReport(report({ en: 'Epoch 5: 0xabc123…cdef led.' }), ctx).ok).toBe(true)
   })
 
+  describe('house style', () => {
+    it.each(['盆栽', 'ボンサイ', '盆景', 'エポック'])('rejects 「%s」 in the Japanese text', (term) => {
+      const got = reasons(checkReport(report({ ja: `シーズン 5 の${term}は 12 人でした。` }), ctx)).join()
+      expect(got).toContain(`ja: house style does not allow "${term}"`)
+    })
+    it('accepts Bonsai in English letters and シーズン', () => {
+      expect(checkReport(report({ ja: 'シーズン 5 は Bonsai の参加者 12 人で終わりました。' }), ctx).ok).toBe(true)
+    })
+    it('applies the Japanese spellings to the Japanese text only', () => {
+      // "エポック" in the English text is a different matter (an English report never has it).
+      expect(reasons(checkReport(report({ en: 'Epoch 5 closed.' }), ctx))).toEqual([])
+    })
+  })
+
+  describe('numbers written as words', () => {
+    it.each([
+      ['zero', 'Zero burns happened.'],
+      ['One', 'One player stood out.'],
+      ['twelve', 'Twelve players joined.'],
+      ['twenty', 'Twenty-one burns.'],
+      ['ninety', 'About ninety players.'],
+      ['hundred', 'A hundred burns.'],
+      ['thousands', 'Thousands of BONEXP.'],
+      ['million', 'A million PRUNE.'],
+      ['billion', 'A billion.'],
+      ['dozen', 'A dozen players.'],
+    ])('rejects "%s" in the English text and the cast', (_word, text) => {
+      expect(reasons(checkReport(report({ en: text }), ctx)).join()).toMatch(/en: number written as a word/)
+      expect(reasons(checkReport(report({ cast: text }), ctx)).join()).toMatch(/cast: number written as a word/)
+    })
+
+    it.each(['三人', '十二回', '二本', '百件', '五枚', '三個', '二十人', '一万件', '三割'])('rejects the kanji numeral with a counter: %s', (text) => {
+      expect(reasons(checkReport(report({ ja: `参加者は${text}でした。` }), ctx)).join()).toMatch(/ja: number written as a word/)
+    })
+
+    it('does not reject ordinary words that merely contain a number-word spelling', () => {
+      // "none", "phone", "tone", "bone" contain "one" but are not the number.
+      expect(checkReport(report({ en: 'Epoch 5 closed. The phone stayed quiet and the bone tree grew.' }), ctx).ok).toBe(true)
+    })
+    it('does not reject kanji that are not a numeral with a counter', () => {
+      expect(checkReport(report({ ja: 'シーズン 5 は一部の参加者が活発でした。' }), ctx).ok).toBe(true)
+    })
+    it('accepts digits with Japanese counters', () => {
+      expect(checkReport(report({ ja: 'シーズン 5 は 12 人、40 回でした。' }), ctx).ok).toBe(true)
+    })
+    it('drops an observation that spells a number out or breaks the Japanese house style', () => {
+      const o = (statement: string) => ({ metric: 'players', direction: 'up', statement })
+      expect(acceptObservations([o('Expect three more players.'), o('三人増えそうです。'), o('盆栽が増える。'), o('Players should keep growing.')], facts).map((x) => x.statement)).toEqual(['Players should keep growing.'])
+    })
+  })
+
   it('rejects an empty text', () => {
     expect(reasons(checkReport(report({ en: '  ' }), ctx)).join()).toMatch(/en: empty/)
   })

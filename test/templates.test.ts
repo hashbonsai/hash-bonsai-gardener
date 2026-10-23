@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { forbiddenTermJaIn } from '../src/policy'
 import { castSuffix, factsTable, fallbackReport, GARDENER_LONG, GARDENER_SHORT_EN, notebookLines, voteAnnouncement, voteResult } from '../src/templates'
 import type { Followup } from '../src/types'
 import { sampleFacts } from './fixtures'
@@ -78,6 +79,22 @@ describe('voting notices', () => {
     const lines = voteResult('en', 9, true, [true, false, true, false])
     expect(lines[0]).toMatch(/reached quorum and was applied.*next epoch; the Drain share, immediately/)
     expect(lines.slice(1)).toEqual(['- Prize shape: applied', '- Prize ceiling: unchanged', '- Drain share: applied', '- Rate curve midpoint: unchanged'])
+  })
+})
+
+describe('house style in the fixed Japanese text', () => {
+  const f: Followup = { observationId: 'o', fromEpoch: 4, toEpoch: 5, metric: 'drains', before: 10, after: 22, verdict: 'continued' }
+  it('never uses the spellings the model is forbidden to use', () => {
+    const all = [
+      GARDENER_LONG.ja,
+      ...factsTable(sampleFacts(), 'ja'),
+      ...notebookLines([f], 'ja'),
+      ...voteAnnouncement('ja', 9),
+      ...voteResult('ja', 9, true, [true, false, true, false]),
+      ...voteResult('ja', 9, false, [false, false, false, false]),
+      fallbackReport(sampleFacts(), [f], 'ja'),
+    ].join('\n')
+    expect(forbiddenTermJaIn(all)).toBeNull()
   })
 })
 
