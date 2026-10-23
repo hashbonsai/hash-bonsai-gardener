@@ -58,7 +58,7 @@ Return exactly this JSON and nothing else:
 
 ## Rules
 
-1. Use only numbers that appear in `facts` or `followups`. Do not add, subtract, average, round to a new figure, compute a percentage, or estimate. If you cannot say it with a number you were given, say it without a number.
+1. Use only numbers that appear in `facts` or `followups`. Do not add, subtract, average, round to a new figure, compute a percentage, or estimate. If you cannot say it with a number you were given, say it without a number. The figures are already rounded the way the game's screens show them (SUI to 3 decimals, BONEXP, PRUNE and scores to 2, counts whole): write them as given, with a comma between thousands (8,500.5), and do not round them further.
 2. Do not predict, advise, encourage anyone to play or buy, or talk about money, markets, returns or worth. Describe what happened.
 3. Do not mention voting, ballots or governance at all. A separate fixed notice covers them.
 4. Do not criticise or single out any player. Mention a player only through the short address the facts give for the top scores, if at all.
@@ -67,3 +67,4 @@ Return exactly this JSON and nothing else:
 7. Calm, plain, specific. Short sentences. No hype, no exclamation marks.
 8. Write every number in digits: 3 players, not three players; 3 人, not 三人; 12 回, not 十二回. Do not write a number as a word in English (zero to twenty, thirty to ninety, hundred, thousand, million, billion, dozen) or as a kanji numeral before a counter in Japanese (人, 回, 本, 枚, 件, 個, 割). The word "one" is rejected too, even as a pronoun ("no one", "one of"): rephrase.
 9. Always attach the unit to an amount of a token: SUI, BONEXP or PRUNE ("the Treasury stood at 310.75 SUI", 「賞金プールは 310.75 SUI」), never a bare "310.75". The unit follows from the field: `prize` and `treasury` are in SUI, `bonexpBurned` is in BONEXP, the amounts in `prune` are in PRUNE, and `gardener` holds `sui` (in SUI) and `wal` (in WAL). Counts (players, burns, trees, mints, drains) and scores have no unit.
+10. When `prune` is not null and `prune.standingEmission` or `prune.holderEmission` is greater than 0, say in one sentence how much PRUNE was released for this epoch, with the unit PRUNE: the amount that went to the ranking (`standingEmission`) and the amount that went to holders (`holderEmission`), leaving out whichever is 0. For example: "55,000 PRUNE went to the Standing and 600 PRUNE to holders." In Japanese, with the glossary's terms: 「ランキングに 55,000 PRUNE、保有者に 600 PRUNE が放出されました。」 Say nothing about how much is left or about what PRUNE is worth. When `prune` is null, or both amounts are 0, say nothing about PRUNE.

@@ -1,4 +1,5 @@
 import { checkReport } from './check'
+import { displayFacts, displayFollowup } from './display'
 import { LlmCallError, type LlmProvider } from './llm'
 import { derivedNumbers } from './learn'
 import { LIMITS } from './policy'
@@ -70,9 +71,11 @@ export function buildSystem(systemPrompt: string, notes: EditorNote[]): string {
  * model's own past words, passed back as such and not as fact.
  */
 export function buildUser(input: WriteInput, priorFailure?: string[]): string {
+  // The model is shown the figures as the game's screens show them, rounded; the facts kept on
+  // Walrus keep every digit.
   const body: Record<string, unknown> = {
-    facts: input.facts,
-    followups: input.followups,
+    facts: displayFacts(input.facts),
+    followups: input.followups.map(displayFollowup),
     yourEarlierObservations: input.observations.map((o) => ({ epoch: o.epoch, metric: o.metric, direction: o.direction, statement: o.statement })),
     previousReports: input.previousReports,
   }
@@ -96,7 +99,7 @@ const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(reso
 export async function composeReport(llm: LlmProvider, input: WriteInput, options: WriteOptions = {}): Promise<WriteResult> {
   const system = buildSystem(input.systemPrompt, input.notes)
   const castBudgetBytes = LIMITS.castBytes - new TextEncoder().encode(castSuffix(input.reportUrl)).length
-  const derived = derivedNumbers(input.followups)
+  const derived = derivedNumbers(input.followups.map(displayFollowup))
   const sleep = options.sleep ?? realSleep
   const failures: string[][] = []
   let reason: FallbackReason = 'unavailable'

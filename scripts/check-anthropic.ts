@@ -47,8 +47,19 @@ async function main() {
     },
   }
 
-  // A plausible epoch 5 with one earlier observation already graded.
-  const facts = sampleFacts()
+  // A plausible epoch 5 with one earlier observation already graded. The figures carry every digit
+  // the chain gives, as the real ones do, so the model is shown them rounded and the check is run
+  // against the rounded values; `prune` carries emissions, so the PRUNE sentence is asked for.
+  const facts = sampleFacts({
+    bonexpBurned: 39284.812586853,
+    top: [
+      { address: '0x8cd1…d42c', score: 18301.154176 },
+      { address: '0x5538…f3fe', score: 14986.5 },
+      { address: '0x76f6…c1d9', score: 4540.964136494 },
+    ],
+    prize: { extracted: 7.17848, awarded: 7.178479998, seedsByTier: [1, 2, 1], settlerReward: 0.2 },
+    treasury: { value: 64.40632, asOf: 'after-settle' },
+  })
   const followups: Followup[] = [{ observationId: 'obs-4-1', fromEpoch: 4, toEpoch: 5, metric: 'players', before: 9, after: 12, verdict: 'continued' }]
   const observations: Observation[] = [
     { id: 'obs-4-1', epoch: 4, metric: 'players', direction: 'up', baseline: 9, statement: 'The Standing may keep filling.' },

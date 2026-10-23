@@ -1,3 +1,4 @@
+import { displayFacts } from './display'
 import { allowedNumbers, disallowedNumbers } from './numbers'
 import { forbiddenTermJaIn, forbiddenWordIn, LIMITS, numberWordIn, ruledOutJapaneseSpellingIn, voteWordIn } from './policy'
 import { OBSERVATION_METRICS, type Direction, type Facts, type LlmReport, type Observation, type ObservationMetric, type RawObservation } from './types'
@@ -40,7 +41,7 @@ const DIRECTIONS: Direction[] = ['up', 'down', 'flat']
  * drops the rest one at a time — a bad observation costs only itself.
  * `baseline` is read from the facts; the model's own figure is never used.
  */
-export function acceptObservations(raw: RawObservation[], facts: Facts, allowed: number[] = allowedNumbers(facts)): Observation[] {
+export function acceptObservations(raw: RawObservation[], facts: Facts, allowed: number[] = allowedNumbers(displayFacts(facts))): Observation[] {
   const out: Observation[] = []
   const shortOk = new Set((facts.top ?? []).map((t) => t.address.toLowerCase()))
   for (const r of raw) {
@@ -68,7 +69,8 @@ export function acceptObservations(raw: RawObservation[], facts: Facts, allowed:
 
 export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
   const reasons: string[] = []
-  const allowed = allowedNumbers(ctx.facts, ctx.derived)
+  // What the model was shown is the rounded figures, so those are what it may quote.
+  const allowed = allowedNumbers(displayFacts(ctx.facts), ctx.derived)
   const shortOk = new Set((ctx.facts.top ?? []).map((t) => t.address.toLowerCase()))
 
   const texts: [string, string][] = [

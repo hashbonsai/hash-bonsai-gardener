@@ -1,3 +1,4 @@
+import { DIGITS, metricDigits } from './display'
 import type { Facts, Followup, Lang, ObservationMetric, Verdict } from './types'
 
 /**
@@ -53,27 +54,27 @@ export function factsTable(facts: Facts, lang: Lang): string[] {
   add(L.epoch, String(facts.epoch))
   add(L.players, facts.players === null ? null : fmt(facts.players, 0))
   add(L.burns, facts.burns === null ? null : fmt(facts.burns, 0))
-  add(L.bonexpBurned, facts.bonexpBurned === null ? null : fmt(facts.bonexpBurned))
+  add(L.bonexpBurned, facts.bonexpBurned === null ? null : fmt(facts.bonexpBurned, DIGITS.token))
   if (facts.prize) {
-    add({ en: L.extracted.en, ja: `シーズン ${facts.epoch} の${L.extracted.ja}` }, fmt(facts.prize.extracted))
-    add(L.awarded, fmt(facts.prize.awarded))
+    add({ en: L.extracted.en, ja: `シーズン ${facts.epoch} の${L.extracted.ja}` }, fmt(facts.prize.extracted, DIGITS.sui))
+    add(L.awarded, fmt(facts.prize.awarded, DIGITS.sui))
     add(L.seeds, facts.prize.seedsByTier === null ? null : facts.prize.seedsByTier.map((n, i) => `T${i + 1}×${fmt(n, 0)}`).join(' '))
   }
-  if (facts.treasury) add(facts.treasury.asOf === 'after-settle' ? L.treasury : L.treasuryNow, fmt(facts.treasury.value))
+  if (facts.treasury) add(facts.treasury.asOf === 'after-settle' ? L.treasury : L.treasuryNow, fmt(facts.treasury.value, DIGITS.sui))
   if (facts.mints) {
     add(L.mints, fmt(facts.mints.delta, 0))
     add(L.mintsTotal, fmt(facts.mints.cumulative, 0))
   }
   if (facts.prune) {
-    add(L.standing, fmt(facts.prune.standingEmission))
-    add(L.holder, fmt(facts.prune.holderEmission))
+    add(L.standing, fmt(facts.prune.standingEmission, DIGITS.token))
+    add(L.holder, fmt(facts.prune.holderEmission, DIGITS.token))
   }
   if (facts.arena) {
     add(L.trees, fmt(facts.arena.trees, 0))
     add(L.seeded, fmt(facts.arena.seeded, 0))
   }
   add(L.drains, facts.drains === null ? null : fmt(facts.drains, 0))
-  if (facts.top && facts.top.length > 0) add(L.top, facts.top.map((t) => `${t.address} ${fmt(t.score)}`).join(', '))
+  if (facts.top && facts.top.length > 0) add(L.top, facts.top.map((t) => `${t.address} ${fmt(t.score, DIGITS.token)}`).join(', '))
   return rows
 }
 
@@ -98,11 +99,13 @@ const VERDICT: Record<Verdict, { en: string; ja: string }> = {
 
 /** One line per follow-up, numbers and verdict from code. */
 export function notebookLines(followups: Followup[], lang: Lang): string[] {
-  return followups.map((f) =>
-    lang === 'en'
-      ? `Epoch ${f.fromEpoch} note on ${METRIC[f.metric].en}: ${fmt(f.before)} → epoch ${f.toEpoch}: ${fmt(f.after)}. ${VERDICT[f.verdict].en}.`
-      : `シーズン ${f.fromEpoch} の観察(${METRIC[f.metric].ja}): ${fmt(f.before)} → シーズン ${f.toEpoch}: ${fmt(f.after)}。${VERDICT[f.verdict].ja}。`,
-  )
+  return followups.map((f) => {
+    const digits = metricDigits(f.metric)
+    const [before, after] = [fmt(f.before, digits), fmt(f.after, digits)]
+    return lang === 'en'
+      ? `Epoch ${f.fromEpoch} note on ${METRIC[f.metric].en}: ${before} → epoch ${f.toEpoch}: ${after}. ${VERDICT[f.verdict].en}.`
+      : `シーズン ${f.fromEpoch} の観察(${METRIC[f.metric].ja}): ${before} → シーズン ${f.toEpoch}: ${after}。${VERDICT[f.verdict].ja}。`
+  })
 }
 
 // ── Voting notices (fixed — the model never writes these) ─────────────────
