@@ -86,7 +86,7 @@ const METRIC: Record<ObservationMetric, { en: string; ja: string }> = {
   prizeOut: { en: 'prize awarded', ja: 'Crown Seed に封入した賞金' },
   mints: { en: 'mints in the epoch', ja: 'シーズン中のミント' },
   arenaTrees: { en: 'Bonsai in the Arena', ja: 'アリーナの Bonsai' },
-  seededTrees: { en: 'Bonsai with a Crown Seed', ja: 'Crown Seed 付きの Bonsai' },
+  seededTrees: { en: 'Bonsai with a Crown Seed', ja: 'Crown Seed を付けた Bonsai' },
   drains: { en: 'drains', ja: 'ドレインの回数' },
 }
 

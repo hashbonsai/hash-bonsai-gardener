@@ -109,6 +109,7 @@ describe('house style in the fixed Japanese text', () => {
     expect(notebookLines([f], 'ja')[0]).toContain('Crown Seed に封入した賞金')
     expect(notebookLines([{ ...f, metric: 'burns' }], 'ja')[0]).toContain('スコアに変換した回数')
     expect(notebookLines([{ ...f, metric: 'bonexpBurned' }], 'ja')[0]).toContain('スコアに変換した BONEXP')
+    expect(notebookLines([{ ...f, metric: 'seededTrees' }], 'ja')[0]).toContain('Crown Seed を付けた Bonsai')
   })
   it('says 確定 for settling, as the game does, and not 清算 or 精算', () => {
     const table = factsTable(sampleFacts(), 'ja').join('\n')
