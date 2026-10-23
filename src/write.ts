@@ -1,8 +1,9 @@
 import { checkReport } from './check'
-import type { LlmProvider } from './llm'
+import { LlmCallError, type LlmProvider } from './llm'
 import { derivedNumbers } from './learn'
 import { LIMITS } from './policy'
-import { castSuffix, fallbackReport } from './templates'
+import { redact } from './redact'
+import { castSuffix, fallbackReport, type FallbackReason } from './templates'
 import type { EditorNote, Facts, Followup, LlmReport, Observation } from './types'
 
 export type WriteInput = {
@@ -24,14 +25,28 @@ export type WriteResult = {
   text: { en: string; ja: string }
   cast: string
   observations: Observation[]
-  /** True when the model's text twice failed its checks and only the fixed text remains. */
+  /** True when no commentary was kept and only the fixed text remains. */
   fallback: boolean
+  /**
+   * Why there is no commentary, by what the last attempt ended on: the text
+   * failed its checks, or no usable text could be had from the model (a call
+   * that failed, or an answer of the wrong shape). Null when the report passed.
+   */
+  fallbackReason: FallbackReason | null
+  /** How many attempts were made; fewer than the maximum when a failure was one that retrying cannot fix. */
   attempts: number
   /** Why each failed attempt failed (empty when the first passed). */
   failures: string[][]
 }
 
+export type WriteOptions = {
+  /** The pause before trying again after a failure that may pass (a rate limit, an overloaded server). */
+  transientDelayMs?: number
+  sleep?: (ms: number) => Promise<void>
+}
+
 const MAX_ATTEMPTS = 2
+const TRANSIENT_DELAY_MS = 30_000
 
 function isLlmReport(v: unknown): v is LlmReport {
   const r = v as Partial<LlmReport> | null
@@ -67,22 +82,45 @@ export function buildUser(input: WriteInput, priorFailure?: string[]): string {
   return JSON.stringify(body)
 }
 
-export async function composeReport(llm: LlmProvider, input: WriteInput): Promise<WriteResult> {
+const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Writes the commentary, trying at most twice. A failed check is retried with
+ * the reasons shown to the model. A call that failed for good (a bad key, a
+ * refused request) is not retried at all; one that may pass (a rate limit, an
+ * overloaded server) is retried after a pause; an answer of the wrong shape
+ * is retried at once. If no attempt passes, the fixed text is returned and
+ * `fallbackReason` says whether that was the checks or the model being out of
+ * reach — the two read differently in the report and to the operator.
+ */
+export async function composeReport(llm: LlmProvider, input: WriteInput, options: WriteOptions = {}): Promise<WriteResult> {
   const system = buildSystem(input.systemPrompt, input.notes)
   const castBudgetBytes = LIMITS.castBytes - new TextEncoder().encode(castSuffix(input.reportUrl)).length
   const derived = derivedNumbers(input.followups)
+  const sleep = options.sleep ?? realSleep
   const failures: string[][] = []
+  let reason: FallbackReason = 'unavailable'
+  let attempts = 0
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    attempts = attempt
     let raw: unknown
     try {
       raw = await llm.generate({ system, user: buildUser(input, failures.at(-1)) })
     } catch (e) {
-      failures.push([`the model call failed: ${e instanceof Error ? e.message.slice(0, 200) : 'unknown error'}`])
+      const text = redact(e instanceof Error ? e.message : 'unknown error').slice(0, 200)
+      reason = 'unavailable'
+      if (e instanceof LlmCallError && e.kind === 'permanent') {
+        failures.push([`the model call failed and will not be retried: ${text}`])
+        break
+      }
+      failures.push([`the model call failed: ${text}`])
+      if (e instanceof LlmCallError && attempt < MAX_ATTEMPTS) await sleep(options.transientDelayMs ?? TRANSIENT_DELAY_MS)
       continue
     }
     if (!isLlmReport(raw)) {
       failures.push(['the output was not { en, ja, cast, observations }'])
+      reason = 'unavailable'
       continue
     }
     const checked = checkReport(raw, { facts: input.facts, derived, castBudgetBytes })
@@ -92,19 +130,39 @@ export async function composeReport(llm: LlmProvider, input: WriteInput): Promis
         cast: raw.cast.trim(),
         observations: checked.observations,
         fallback: false,
+        fallbackReason: null,
         attempts: attempt,
         failures,
       }
     }
     failures.push(checked.reasons)
+    reason = 'checks'
   }
 
   return {
-    text: { en: fallbackReport(input.facts, input.followups, 'en'), ja: fallbackReport(input.facts, input.followups, 'ja') },
+    text: {
+      en: fallbackReport(input.facts, input.followups, 'en', reason),
+      ja: fallbackReport(input.facts, input.followups, 'ja', reason),
+    },
     cast: `The Gardener's report for epoch ${input.facts.epoch} is out.`,
     observations: [],
     fallback: true,
-    attempts: MAX_ATTEMPTS,
+    fallbackReason: reason,
+    attempts,
     failures,
   }
+}
+
+/**
+ * What the operator should be told when a report had no commentary, for the
+ * notifier to send (it redacts again on the way out). Null when the report passed.
+ */
+export function operatorNotice(result: WriteResult, epoch: number): string | null {
+  if (!result.fallback || !result.fallbackReason) return null
+  const last = (result.failures.at(-1) ?? []).join('; ')
+  const head =
+    result.fallbackReason === 'unavailable'
+      ? `Epoch ${epoch}: the commentary could not be written, so the report has only the figures. Last problem: ${last}`
+      : `Epoch ${epoch}: the commentary failed its checks, so the report has only the figures. Last reasons: ${last}`
+  return redact(head)
 }

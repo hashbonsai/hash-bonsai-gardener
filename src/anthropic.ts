@@ -1,8 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { LlmProvider } from './llm'
+import { LlmCallError, type LlmProvider } from './llm'
 import { OBSERVATION_METRICS } from './types'
 
-export const DEFAULT_MODEL = 'claude-opus-5-5'
+/** Practice and production use the same model; `AnthropicOptions.model` can still replace it. */
+export const DEFAULT_MODEL = 'claude-sonnet-5-5'
 
 /**
  * `fallbacks: "default"` asks the API to re-run a request the model declined
@@ -44,9 +45,24 @@ export type MessagesApi = { create(params: Params): Promise<Message> }
 
 export type AnthropicOptions = {
   model?: string
-  /** `medium` is the model's default; the report is short, so spend the thinking on getting it right. */
+  /** Set explicitly so a change of model does not silently change it (defaults differ between models). */
   effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
   maxTokens?: number
+}
+
+/**
+ * Retrying can help for: a request timeout, a rate limit (429), an overloaded
+ * server (529), any server error (5xx), and a dropped connection. Everything
+ * else the API says (400, 401, 403, 404, 413, 422...) is the same on every try.
+ * An error that is not from the API at all is a bug, not something to repeat.
+ */
+export function classifyCallError(error: unknown): LlmCallError {
+  const message = error instanceof Error ? error.message : String(error)
+  const status = (error as { status?: unknown } | null)?.status
+  const transient =
+    error instanceof Anthropic.APIConnectionError ||
+    (typeof status === 'number' && (status === 408 || status === 429 || status === 529 || status >= 500))
+  return new LlmCallError(message, transient ? 'transient' : 'permanent')
 }
 
 export function anthropicProvider(api: MessagesApi, options: AnthropicOptions = {}): LlmProvider {
@@ -56,16 +72,21 @@ export function anthropicProvider(api: MessagesApi, options: AnthropicOptions = 
   return {
     servedModel: () => served,
     async generate({ system, user }) {
-      const response = await api.create({
-        model,
-        max_tokens: options.maxTokens ?? 16000,
-        betas: [FALLBACK_BETA],
-        fallbacks: 'default',
-        thinking: { type: 'adaptive' },
-        output_config: { effort: options.effort ?? 'high', format: { type: 'json_schema', schema: REPORT_SCHEMA } },
-        system,
-        messages: [{ role: 'user', content: user }],
-      })
+      let response: Message
+      try {
+        response = await api.create({
+          model,
+          max_tokens: options.maxTokens ?? 16000,
+          betas: [FALLBACK_BETA],
+          fallbacks: 'default',
+          thinking: { type: 'adaptive' },
+          output_config: { effort: options.effort ?? 'high', format: { type: 'json_schema', schema: REPORT_SCHEMA } },
+          system,
+          messages: [{ role: 'user', content: user }],
+        })
+      } catch (e) {
+        throw classifyCallError(e)
+      }
       served = response.model
 
       if (response.stop_reason === 'refusal') {

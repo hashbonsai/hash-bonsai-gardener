@@ -3,7 +3,7 @@ import type { Facts, Followup, Lang, ObservationMetric, Verdict } from './types'
 /**
  * Everything the model does not write: the table of figures, the voting
  * notices, the notebook lines, the closing sentence, and the whole report when
- * the model's text twice failed its checks. All text here is fixed in code,
+ * there is no commentary to show. All text here is fixed in code,
  * so what it says about voting cannot drift and no figure in it can be wrong.
  */
 
@@ -158,13 +158,26 @@ export function voteResult(lang: Lang, ballotEpoch: number, quorumMet: boolean, 
 
 // ── Fallback and assembly ─────────────────────────────────────────────────
 
+/** Why a report has no commentary: the text failed its checks, or no usable text could be had from the model. */
+export type FallbackReason = 'checks' | 'unavailable'
+
+const FALLBACK_NOTE: Record<FallbackReason, Record<Lang, string>> = {
+  checks: {
+    en: 'This week’s commentary did not pass its checks, so only the figures are shown.',
+    ja: '今回の講評は検査に通らなかったため、数字のみを掲載します。',
+  },
+  unavailable: {
+    en: 'This week’s commentary could not be written, so only the figures are shown.',
+    ja: '今回の講評は作れなかったため、数字のみを掲載します。',
+  },
+}
+
 /**
- * The report when the model's text twice failed its checks: the figures, the
- * notebook, and the closing sentence — nothing the model wrote.
+ * The report when there is no commentary to show: the figures, the notebook,
+ * and the closing sentence — nothing the model wrote.
  */
-export function fallbackReport(facts: Facts, followups: Followup[], lang: Lang): string {
-  const note = lang === 'en' ? 'This week’s commentary did not pass its checks, so only the figures are shown.' : '今回の講評は検査に通らなかったため、数字のみを掲載します。'
-  return [...factsTable(facts, lang), '', ...notebookLines(followups, lang), '', note, '', GARDENER_LONG[lang]].join('\n')
+export function fallbackReport(facts: Facts, followups: Followup[], lang: Lang, reason: FallbackReason = 'checks'): string {
+  return [...factsTable(facts, lang), '', ...notebookLines(followups, lang), '', FALLBACK_NOTE[reason][lang], '', GARDENER_LONG[lang]].join('\n')
 }
 
 /** Short link + sentence appended to the cast; the model's cast text must fit what is left. */

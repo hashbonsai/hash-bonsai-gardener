@@ -13,3 +13,22 @@ export interface LlmProvider {
    */
   servedModel?(): string | null
 }
+
+/**
+ * A failed call, sorted by whether trying again can help:
+ *  - `permanent`: a bad key, a refused request, a missing model. Another try
+ *    would fail the same way, so none is made.
+ *  - `transient`: a rate limit, an overloaded or failing server, a dropped
+ *    connection. A try after a pause may work.
+ * Any other error a provider throws (an unusable answer, for one) is retried
+ * once straight away.
+ */
+export class LlmCallError extends Error {
+  constructor(
+    message: string,
+    readonly kind: 'permanent' | 'transient',
+  ) {
+    super(message)
+    this.name = 'LlmCallError'
+  }
+}

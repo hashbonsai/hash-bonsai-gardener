@@ -27,10 +27,17 @@ export const FORBIDDEN_WORDS_EN = [
 export const VOTE_WORDS = ['vote', 'voting', 'ballot', '投票'] as const
 
 /**
- * House style for Japanese copy: the tree is written "Bonsai" in English
- * letters and an epoch is 「シーズン」. These spellings never appear in `ja`.
+ * The game's Japanese glossary, as the model must follow it (the table is in
+ * the system prompt). These spellings never appear in `ja`:
+ *  - Japanese spellings the glossary rules out: the tree is "Bonsai" in English
+ *    letters, an epoch is 「シーズン」, a burn is 「スコアに変換」.
+ *  - English words that have a Japanese term: Standing → ランキング,
+ *    Arena → アリーナ, Gardener → 庭師. They are fine in the English text, so
+ *    they are checked in `ja` only.
  */
-export const FORBIDDEN_TERMS_JA = ['盆栽', 'ボンサイ', '盆景', 'エポック'] as const
+export const JAPANESE_SPELLINGS_RULED_OUT = ['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン'] as const
+export const ENGLISH_WORDS_RULED_OUT_IN_JA = ['Standing', 'Arena', 'Gardener'] as const
+export const FORBIDDEN_TERMS_JA = [...JAPANESE_SPELLINGS_RULED_OUT, ...ENGLISH_WORDS_RULED_OUT_IN_JA] as const
 
 /**
  * Every figure must be written in digits so the number check can see it. An
@@ -59,9 +66,19 @@ export function forbiddenWordIn(text: string): string | null {
   return null
 }
 
-/** The first spelling in `text` that Japanese copy must not use, or null. */
+/** The first term in `text` that the Japanese text must not use (see `FORBIDDEN_TERMS_JA`), or null. */
 export function forbiddenTermJaIn(text: string): string | null {
   for (const w of FORBIDDEN_TERMS_JA) if (text.includes(w)) return w
+  return null
+}
+
+/**
+ * The first Japanese spelling the glossary rules out, or null. Used on text
+ * that is not itself Japanese copy (an observation's sentence), where an
+ * English word like "Standing" is fine but a banned Japanese spelling is not.
+ */
+export function ruledOutJapaneseSpellingIn(text: string): string | null {
+  for (const w of JAPANESE_SPELLINGS_RULED_OUT) if (text.includes(w)) return w
   return null
 }
 

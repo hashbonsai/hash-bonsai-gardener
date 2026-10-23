@@ -17,7 +17,7 @@ import { anthropicClient, anthropicProvider } from '../src/anthropic'
 import type { LlmProvider } from '../src/llm'
 import { redact } from '../src/redact'
 import type { Followup, Observation } from '../src/types'
-import { composeReport } from '../src/write'
+import { composeReport, operatorNotice } from '../src/write'
 import { sampleFacts } from '../test/fixtures'
 
 function arg(name: string): string {
@@ -68,10 +68,16 @@ async function main() {
   console.log(`model that answered: ${real.servedModel?.() ?? '(none)'}`)
   console.log(`attempts: ${result.attempts}`)
   result.failures.forEach((reasons, i) => {
-    console.log(`attempt ${i + 1} failed its checks:`)
+    console.log(`attempt ${i + 1} did not give a usable report:`)
     for (const r of reasons) console.log(`  - ${r}`)
   })
-  console.log(result.fallback ? 'FALLBACK: both attempts failed, so the report is the fixed text only' : `passed all checks on attempt ${result.attempts}`)
+  console.log(
+    result.fallback
+      ? `FALLBACK (${result.fallbackReason === 'checks' ? 'the text failed its checks' : 'the model could not be reached or gave nothing usable'}): the report is the fixed text only`
+      : `passed all checks on attempt ${result.attempts}`,
+  )
+  const notice = operatorNotice(result, facts.epoch)
+  if (notice) console.log(`what the operator would be told on Discord: ${notice}`)
   console.log(`\nen: ${result.text.en}\n\nja: ${result.text.ja}\n\ncast: ${result.cast}`)
   console.log(`\nobservations kept: ${JSON.stringify(result.observations, null, 2)}`)
 }

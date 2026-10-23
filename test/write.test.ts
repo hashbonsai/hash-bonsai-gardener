@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { LlmProvider } from '../src/llm'
-import { buildSystem, buildUser, composeReport, type WriteInput } from '../src/write'
+import { LlmCallError, type LlmProvider } from '../src/llm'
+import { buildSystem, buildUser, composeReport, operatorNotice, type WriteInput } from '../src/write'
 import type { Followup, Observation } from '../src/types'
 import { CLEAN_REPORT, sampleFacts } from './fixtures'
 
@@ -75,6 +75,89 @@ describe('composeReport', () => {
     const r = await composeReport(script({ en: 'only this' }, 'nonsense'), input())
     expect(r.fallback).toBe(true)
     expect(r.failures[0][0]).toMatch(/not \{ en, ja, cast, observations \}/)
+  })
+
+  describe('a call that failed is told apart from a text that failed its checks', () => {
+    const sleeps: number[] = []
+    const opts = { transientDelayMs: 1234, sleep: async (ms: number) => void sleeps.push(ms) }
+    const permanent = () => new LlmCallError('401 {"error":{"message":"Invalid bearer token"}}', 'permanent')
+    const transient = () => new LlmCallError('429 rate limited', 'transient')
+
+    it('does not retry a failure that retrying cannot fix', async () => {
+      const llm = script(permanent(), CLEAN_REPORT)
+      const r = await composeReport(llm, input(), opts)
+      expect(llm.calls).toHaveLength(1)
+      expect(r).toMatchObject({ fallback: true, fallbackReason: 'unavailable', attempts: 1 })
+      expect(r.failures).toEqual([[expect.stringMatching(/will not be retried: 401/)]])
+    })
+
+    it('says "could not be written" in the fixed text, not "did not pass its checks"', async () => {
+      const r = await composeReport(script(permanent()), input(), opts)
+      expect(r.text.en).toContain('could not be written')
+      expect(r.text.en).not.toContain('did not pass its checks')
+      expect(r.text.ja).toContain('作れなかった')
+      expect(r.text.ja).not.toContain('検査に通らなかった')
+    })
+
+    it('retries a rate limit after a pause and uses the answer', async () => {
+      sleeps.length = 0
+      const r = await composeReport(script(transient(), CLEAN_REPORT), input(), opts)
+      expect(r).toMatchObject({ fallback: false, fallbackReason: null, attempts: 2 })
+      expect(sleeps).toEqual([1234])
+    })
+
+    it('gives up after two rate-limited tries, and does not pause after the last one', async () => {
+      sleeps.length = 0
+      const llm = script(transient(), transient())
+      const r = await composeReport(llm, input(), opts)
+      expect(llm.calls).toHaveLength(2)
+      expect(r).toMatchObject({ fallback: true, fallbackReason: 'unavailable', attempts: 2 })
+      expect(sleeps).toEqual([1234])
+    })
+
+    it('retries an unusable answer at once, with no pause', async () => {
+      sleeps.length = 0
+      const r = await composeReport(script(new Error('the model returned no text'), CLEAN_REPORT), input(), opts)
+      expect(r.fallback).toBe(false)
+      expect(sleeps).toEqual([])
+    })
+
+    it('says "did not pass its checks" only when the checks were what failed', async () => {
+      const r = await composeReport(script(withInvented, withForbidden), input(), opts)
+      expect(r).toMatchObject({ fallback: true, fallbackReason: 'checks' })
+      expect(r.text.en).toContain('did not pass its checks')
+      expect(r.text.ja).toContain('検査に通らなかった')
+    })
+
+    it('goes by the last attempt when the two end differently', async () => {
+      expect((await composeReport(script(withInvented, transient()), input(), opts)).fallbackReason).toBe('unavailable')
+      expect((await composeReport(script(transient(), withInvented), input(), opts)).fallbackReason).toBe('checks')
+    })
+
+    it('keeps a key out of the failure that is reported', async () => {
+      // Built at run time so that no key-shaped text sits in the repository.
+      const fakeKey = ['sk', 'ant', 'api03', 'abcdefghijklmnop'].join('-')
+      const r = await composeReport(script(new LlmCallError(`bad key ${fakeKey}`, 'permanent')), input(), opts)
+      expect(r.failures.join()).not.toContain(fakeKey)
+      expect(r.failures.join()).toContain('[redacted key]')
+    })
+  })
+
+  describe('operatorNotice', () => {
+    const opts = { transientDelayMs: 0, sleep: async () => {} }
+    it('is null when the report passed', async () => {
+      expect(operatorNotice(await composeReport(script(CLEAN_REPORT), input(), opts), 5)).toBeNull()
+    })
+    it('names the call failure and its reason when the model could not be reached', async () => {
+      const n = operatorNotice(await composeReport(script(new LlmCallError('401 Invalid bearer token', 'permanent')), input(), opts), 5)
+      expect(n).toMatch(/Epoch 5: the commentary could not be written/)
+      expect(n).toMatch(/401 Invalid bearer token/)
+    })
+    it('names the failed checks when the text was the problem', async () => {
+      const n = operatorNotice(await composeReport(script(withInvented, withForbidden), input(), opts), 5)
+      expect(n).toMatch(/Epoch 5: the commentary failed its checks/)
+      expect(n).toMatch(/forbidden word/)
+    })
   })
 
   it('lets a follow-up result license numbers the facts do not hold', async () => {

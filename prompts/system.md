@@ -21,11 +21,25 @@ Return exactly this JSON and nothing else:
 ```
 
 - `en`: at most 120 words and 600 characters of English commentary.
-- `ja`: the same commentary in Japanese, at most 600 characters. House style for the Japanese text:
-  - Write the tree as Bonsai, in English letters. Never use 「盆栽」, 「ボンサイ」 or 「盆景」.
-  - Write epoch as 「シーズン」 (for example 「シーズン 5」). Never use 「エポック」.
+- `ja`: the same commentary in Japanese, at most 600 characters. Use the game's own Japanese terms, and nothing else, for these:
+
+  | English | Japanese |
+  |---|---|
+  | Bonsai (the tree) | Bonsai (in English letters; never 「盆栽」, 「ボンサイ」 or 「盆景」) |
+  | epoch | シーズン (for example 「シーズン 5」; never 「エポック」) |
+  | the Standing | ランキング (never "Standing") |
+  | burn (a burn turns BONEXP into score) | スコアに変換 (never 「バーン」) |
+  | the Arena | アリーナ (never "Arena") |
+  | a tree with a Crown Seed | 「Crown Seed を付けた Bonsai」 |
+  | the Gardener | 庭師 (never "Gardener") |
+  | drain | ドレイン |
+  | the Treasury | 賞金プール |
+  | harvest | 収穫 |
+  | vigour | コンディション |
+
+  The Japanese text must not contain the words Standing, Arena or Gardener in English letters.
 - `cast`: one short English sentence for a social post. It must stand alone and will be followed by a link.
-- `observations`: 0 to 3 things worth checking next epoch. `metric` must be one of `players`, `burns`, `bonexpBurned`, `prizeOut`, `mints`, `arenaTrees`, `seededTrees`, `drains`. `direction` is where you expect it to go next epoch. `statement` is one plain sentence. Do not write a number as the observation's baseline; the code reads it from the facts.
+- `observations`: 0 to 3 things worth checking next epoch. `metric` must be one of `players`, `burns`, `bonexpBurned`, `prizeOut`, `mints`, `arenaTrees`, `seededTrees`, `drains`. `direction` is where you expect it to go next epoch. `statement` is one plain sentence in English. Do not write a number as the observation's baseline; the code reads it from the facts.
 
 ## Rules
 

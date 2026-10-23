@@ -1,5 +1,7 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { describe, expect, it } from 'vitest'
 import { anthropicProvider, DEFAULT_MODEL, REPORT_SCHEMA, type MessagesApi } from '../src/anthropic'
+import { LlmCallError } from '../src/llm'
 import { OBSERVATION_METRICS } from '../src/types'
 
 type Reply = Partial<Awaited<ReturnType<MessagesApi['create']>>>
@@ -20,6 +22,10 @@ const report = { en: 'English.', ja: '日本語。', cast: 'A cast.', observatio
 const textReply = (text: string): Reply => ({ content: [{ type: 'text', text, citations: null }] as never })
 
 describe('anthropicProvider', () => {
+  it('uses Sonnet 5.5 unless told otherwise, for practice and for production alike', () => {
+    expect(DEFAULT_MODEL).toBe('claude-sonnet-5-5')
+  })
+
   it('returns the model\'s JSON, parsed', async () => {
     const { api } = fake(textReply(JSON.stringify(report)))
     expect(await anthropicProvider(api).generate({ system: 's', user: 'u' })).toEqual(report)
@@ -29,7 +35,7 @@ describe('anthropicProvider', () => {
     const { api, calls } = fake(textReply(JSON.stringify(report)))
     await anthropicProvider(api).generate({ system: 'the system', user: 'the user' })
     const p = calls[0]
-    expect(p.model).toBe('claude-opus-5-5')
+    expect(p.model).toBe('claude-sonnet-5-5')
     expect(p.system).toBe('the system')
     expect(p.messages).toEqual([{ role: 'user', content: 'the user' }])
     expect(p.betas).toEqual(['server-side-fallback-2026-07-01'])
@@ -77,6 +83,40 @@ describe('anthropicProvider', () => {
   it('skips thinking blocks and reads the text block', async () => {
     const reply: Reply = { content: [{ type: 'thinking', thinking: '', signature: 'x' }, { type: 'text', text: JSON.stringify(report), citations: null }] as never }
     expect(await anthropicProvider(fake(reply).api).generate({ system: 's', user: 'u' })).toEqual(report)
+  })
+
+  describe('a failed call is sorted by whether trying again can help', () => {
+    const failing = (error: unknown): MessagesApi => ({
+      create: () => Promise.reject(error),
+    })
+    const apiError = (status: number, message = 'x') => Object.assign(new Error(message), { status })
+    const attempt = (error: unknown) => anthropicProvider(failing(error)).generate({ system: 's', user: 'u' }).catch((e: unknown) => e)
+
+    it.each([400, 401, 403, 404, 413, 422])('does not retry HTTP %i', async (status) => {
+      const e = await attempt(apiError(status, `${status} {"error":{"message":"nope"}}`))
+      expect(e).toBeInstanceOf(LlmCallError)
+      expect((e as LlmCallError).kind).toBe('permanent')
+      expect((e as LlmCallError).message).toContain(String(status))
+    })
+
+    it.each([408, 429, 500, 502, 503, 529])('retries HTTP %i', async (status) => {
+      expect(((await attempt(apiError(status))) as LlmCallError).kind).toBe('transient')
+    })
+
+    it('retries a dropped connection and a timeout', async () => {
+      expect(((await attempt(new Anthropic.APIConnectionError({ message: 'socket closed' }))) as LlmCallError).kind).toBe('transient')
+      expect(((await attempt(new Anthropic.APIConnectionTimeoutError())) as LlmCallError).kind).toBe('transient')
+    })
+
+    it('treats an error that is not from the API as permanent, since repeating a bug does not fix it', async () => {
+      expect(((await attempt(new TypeError('x is undefined'))) as LlmCallError).kind).toBe('permanent')
+    })
+
+    it('leaves an unusable answer as a plain error, so it is retried once without a pause', async () => {
+      const e = await anthropicProvider(fake({ stop_reason: 'refusal', stop_details: { type: 'refusal', category: 'cyber', explanation: null } as never }).api).generate({ system: 's', user: 'u' }).catch((x: unknown) => x)
+      expect(e).toBeInstanceOf(Error)
+      expect(e).not.toBeInstanceOf(LlmCallError)
+    })
   })
 
   it('passes a chosen effort and model through', async () => {

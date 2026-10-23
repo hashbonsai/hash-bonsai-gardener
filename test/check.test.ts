@@ -96,12 +96,22 @@ describe('checkReport', () => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 の${term}は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
-    it('accepts Bonsai in English letters and シーズン', () => {
-      expect(checkReport(report({ ja: 'シーズン 5 は Bonsai の参加者 12 人で終わりました。' }), ctx).ok).toBe(true)
+    it.each(['バーン', 'Standing', 'Arena', 'Gardener'])('rejects 「%s」 in the Japanese text (the glossary has a Japanese term)', (term) => {
+      const got = reasons(checkReport(report({ ja: `シーズン 5 の ${term} は 12 人でした。` }), ctx)).join()
+      expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
-    it('applies the Japanese spellings to the Japanese text only', () => {
-      // "エポック" in the English text is a different matter (an English report never has it).
-      expect(reasons(checkReport(report({ en: 'Epoch 5 closed.' }), ctx))).toEqual([])
+    it('accepts the glossary terms and Bonsai in English letters', () => {
+      const ja = 'シーズン 5 は、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。庭師の記録です。'
+      expect(checkReport(report({ ja }), ctx).ok).toBe(true)
+    })
+    it('lets the English text and the cast use Standing, Arena and Gardener', () => {
+      const r = checkReport(report({ en: 'Epoch 5: the Standing held 12 players and the Arena stayed busy.', cast: 'The Gardener on epoch 5.' }), ctx)
+      expect(r.ok).toBe(true)
+    })
+    it('lets an English observation use them, and still drops one with a banned Japanese spelling', () => {
+      const o = (statement: string) => ({ metric: 'players', direction: 'up', statement })
+      const got = acceptObservations([o('The Standing may keep filling.'), o('The Arena stays busy.'), o('バーンが続く。')], facts)
+      expect(got.map((x) => x.statement)).toEqual(['The Standing may keep filling.', 'The Arena stays busy.'])
     })
   })
 
