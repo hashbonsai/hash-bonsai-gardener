@@ -1,0 +1,20 @@
+{
+  "network": "mainnet",
+  "address": "0x7ea44266a7310276cdcd916d1c2f46f5609c2a4c78e5c441840c09612f127826",
+  "keyFile": "/etc/gardener/sui-key",
+  "tatumKeyFile": "/etc/gardener/tatum-api-key",
+  "anthropicKeyFile": "/etc/gardener/anthropic-api-key",
+  "memwal": {
+    "keyFile": "/etc/gardener/memwal-delegate-key",
+    "accountId": "0xREPLACE_WITH_YOUR_MEMWAL_ACCOUNT_ID",
+    "serverUrl": "https://relayer.memory.walrus.xyz",
+    "namespace": "hash-bonsai-gardener"
+  },
+  "webhookFile": "/etc/gardener/webhook",
+  "stateFile": "/var/lib/gardener/state.json",
+  "promptFile": "prompts/system.md",
+  "walrusPackageIds": ["0x98da433aa0139512c210597b1c5e3df6cd121d8d77f8652691bb66fadfc8aa1b"],
+  "aggregatorUrl": "https://aggregator.walrus-mainnet.walrus.space",
+  "firstEpoch": 5,
+  "requireApproval": true
+}
