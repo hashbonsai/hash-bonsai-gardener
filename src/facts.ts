@@ -38,7 +38,7 @@ export type RawEpoch = {
     circulating: bigint | null
   } | null
   ballot: {
-    nextBallotEpoch: number
+    nextBallotEpoch: number | null
     open: { epoch: number; deposited: bigint; needed: bigint } | null
     executed: { epoch: number; quorumMet: boolean; applied: boolean[] } | null
   } | null

@@ -237,14 +237,19 @@ export async function collectRawEpoch(src: Sources, epoch: number, options: Coll
     }
   })()
 
-  // ── Ballot: where the next vote is, how the open one stands, what the last one decided ──
+  // What the objects hold is the state of now. It describes this epoch only while the board is on the
+  // next one, i.e. soon after this epoch ended; for an older epoch it is a different time's state.
+  const justEnded = board.epoch === epoch + 1
+
+  // ── Ballot: where the next vote is, how the open one stands (both worked out from the board as it
+  // stands now), and what the last one decided ──
   const ballot = await (async () => {
     if (!governance || !governance.bootstrapped) return null
     const first = governance.firstBallotEpoch
     const now = board.epoch
-    const nextBallotEpoch = now <= first ? first : first + Math.ceil((now - first) / BALLOT_INTERVAL) * BALLOT_INTERVAL
+    const nextBallotEpoch = !justEnded ? null : now <= first ? first : first + Math.ceil((now - first) / BALLOT_INTERVAL) * BALLOT_INTERVAL
     let open: { epoch: number; deposited: bigint; needed: bigint } | null = null
-    if (now >= first && (now - first) % BALLOT_INTERVAL === 0) {
+    if (justEnded && now >= first && (now - first) % BALLOT_INTERVAL === 0) {
       open = await attempt('open ballot', async () => {
         const row = await src.ballot(governance.ballotsTableId, now)
         const circulating = row?.circulating ?? (lock ? PRUNE_TOTAL_SUPPLY - distributor.pool - lock.balance : null)
@@ -295,13 +300,15 @@ export async function collectRawEpoch(src: Sources, epoch: number, options: Coll
     mints,
     prune,
     ballot,
-    arena: arena ? { trees: arena.stationed, seeded: arena.seeded } : null,
+    arena: justEnded && arena ? { trees: arena.stationed, seeded: arena.seeded } : null,
     drains: drainCount,
     config,
     tx: {
       settle: settle?.digest ?? null,
       advance: (emissions?.find((e) => e.epoch === epoch) ?? holderEmissions?.find((e) => e.epoch === epoch))?.digest ?? null,
-      execute: ballotsExecuted && ballotsExecuted.length > 0 ? ballotsExecuted[ballotsExecuted.length - 1].digest : null,
+      // A ballot is applied after its epoch is over, so the epoch that ran a vote is the one whose
+      // report names the transaction that applied it.
+      execute: ballotsExecuted?.find((e) => e.ballotEpoch === epoch)?.digest ?? null,
     },
     gardener: balances ? { sui: balances.sui, wal: balances.wal, spentThisEpoch: options.spentThisEpoch } : null,
   }

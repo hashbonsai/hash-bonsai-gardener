@@ -80,11 +80,29 @@ describe('an epoch settled before distribution began (real mainnet data, epoch 1
     expect(raw.prune).toBeNull()
   })
 
-  it('reports the Arena, the next ballot and the gardener as of now', async () => {
-    const { raw } = await collectRawEpoch(await mainnetSources(), 1, { spentThisEpoch: 12_000_000n })
+  it('reports the Arena and the next ballot as of now only when the board is on the epoch after this one', async () => {
+    const src = { ...(await mainnetSources()), board: async () => ({ epoch: 2, endsAtMs: 0 }) }
+    const { raw } = await collectRawEpoch(src, 1, { spentThisEpoch: 12_000_000n })
     expect(raw.arena).toEqual({ trees: 10, seeded: 7 })
     expect(raw.ballot).toEqual({ nextBallotEpoch: 9, open: null, executed: null })
     expect(raw.gardener).toEqual({ sui: 2n * U, wal: 9_989_828_272n, spentThisEpoch: 12_000_000n })
+  })
+
+  it('leaves the Arena and the ballot’s now-figures null for an older epoch (epoch 2, with the board on 4)', async () => {
+    const { raw, problems } = await collectRawEpoch(await mainnetSources(), 2, NO_SPEND)
+    expect(raw.arena).toBeNull()
+    expect(raw.ballot).toEqual({ nextBallotEpoch: null, open: null, executed: null })
+    // Not a failure to read: the figures are simply not this epoch's.
+    expect(problems.filter((p) => /arena|ballot/i.test(p))).toEqual([])
+  })
+
+  it('still reports the last executed ballot for an older epoch', async () => {
+    const src = {
+      ...(await mainnetSources()),
+      ballotsExecuted: async () => [{ digest: 'EX', timestampMs: 1, ballotEpoch: 9, quorumMet: true, applied: [true, true, true, true] }],
+    }
+    const { raw } = await collectRawEpoch(src, 2, NO_SPEND)
+    expect(raw.ballot).toEqual({ nextBallotEpoch: null, open: null, executed: { epoch: 9, quorumMet: true, applied: [true, true, true, true] } })
   })
 
   it('turns into facts in whole units', async () => {
@@ -263,9 +281,15 @@ describe('a distributing epoch (epoch 5, the board on 6)', () => {
     expect(raw.prune).toMatchObject({ standingEmission: 0n, holderEmission: 0n, holderCount: 0, tapDivisor: 8 })
   })
 
-  it('records the digests of the settle, the advance and the latest ballot execution', async () => {
+  it('names the settle and the advance, and no ballot execution when this epoch ran no vote', async () => {
     const { raw } = await collectRawEpoch(await distributingSources(), 5, NO_SPEND)
-    expect(raw.tx).toEqual({ settle: 'SETTLE5', advance: 'ADV5', execute: 'EX2' })
+    expect(raw.tx).toEqual({ settle: 'SETTLE5', advance: 'ADV5', execute: null })
+  })
+
+  it('names the transaction that applied the ballot this epoch ran, and only that one', async () => {
+    const executed = (ballotEpoch: number, digest: string) => ({ digest, timestampMs: 1, ballotEpoch, quorumMet: true, applied: [true, false, true, false] })
+    const src = await distributingSources({ ballotsExecuted: async () => [executed(1, 'EX1'), executed(5, 'EX5'), executed(9, 'EX9')] })
+    expect((await collectRawEpoch(src, 5, NO_SPEND)).raw.tx.execute).toBe('EX5')
   })
 
   it('reports the latest executed ballot with its per-item results', async () => {
@@ -329,24 +353,27 @@ describe('what happens when a part cannot be read', () => {
 
   it('leaves the open ballot unread, with the reason, when the circulating supply cannot be had', async () => {
     // The board is on 9, a ballot epoch, nobody has voted yet (no row), and the lock cannot be read.
+    // Epoch 8 has just ended and its distribution is confirmed.
     const src = await distributingSources({
       board: async () => ({ epoch: 9, endsAtMs: 0 }),
+      distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: 9, unallocated: 1n, holderUnallocated: 1n, pool: 78_500n * U }),
       ballot: async () => null,
       operatorLock: async () => Promise.reject(new Error('lock unreadable')),
     })
-    const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+    const { raw, problems } = await collectRawEpoch(src, 8, NO_SPEND)
     expect(raw.ballot).toMatchObject({ nextBallotEpoch: 9, open: null })
     expect(problems).toEqual(expect.arrayContaining([expect.stringMatching(/operator lock: lock unreadable/), expect.stringMatching(/open ballot: the circulating supply could not be read/)]))
     // The same failure leaves the circulating figure unknown, and everything else stands.
-    expect(raw.prune).toMatchObject({ standingEmission: 5_500n * U, circulating: null })
+    expect(raw.prune).toMatchObject({ standingEmission: 0n, standingRemaining: 1n, circulating: null })
   })
 })
 
 describe('the ballot', () => {
+  /** A board on `now`, collected for the epoch just before it: the case in which the board's own figures apply. */
   const governed = (now: number, over: Partial<Sources> = {}) =>
     distributingSources({
       board: async () => ({ epoch: now, endsAtMs: 0 }),
-      distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: 6, unallocated: 1n, holderUnallocated: 1n, pool: 78_500n * U }),
+      distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: now, unallocated: 1n, holderUnallocated: 1n, pool: 78_500n * U }),
       ...over,
     })
 
@@ -358,21 +385,26 @@ describe('the ballot', () => {
     [13, 13],
     [14, 17],
   ])('puts the next ballot epoch for a board on epoch %i at %i', async (now, next) => {
-    const { raw } = await collectRawEpoch(await governed(now), 5, NO_SPEND)
+    const { raw } = await collectRawEpoch(await governed(now), now - 1, NO_SPEND)
     expect(raw.ballot!.nextBallotEpoch).toBe(next)
+  })
+
+  it('does not work out a next ballot for an epoch that ended long before the board’s epoch', async () => {
+    const { raw } = await collectRawEpoch(await governed(14), 5, NO_SPEND)
+    expect(raw.ballot).toMatchObject({ nextBallotEpoch: null, open: null })
   })
 
   it('is open only in a ballot epoch, with the deposit and the quorum it needs', async () => {
     const row = { total: 2_000_000n * U, circulating: 20_000_000n * U, executed: false }
-    const { raw } = await collectRawEpoch(await governed(9, { ballot: async () => row }), 5, NO_SPEND)
+    const { raw } = await collectRawEpoch(await governed(9, { ballot: async () => row }), 8, NO_SPEND)
     // A tenth of 20,000,000 is 2,000,000, above the 1,000,000 floor.
     expect(raw.ballot!.open).toEqual({ epoch: 9, deposited: 2_000_000n * U, needed: 2_000_000n * U })
-    expect((await collectRawEpoch(await governed(10), 5, NO_SPEND)).raw.ballot!.open).toBeNull()
+    expect((await collectRawEpoch(await governed(10), 9, NO_SPEND)).raw.ballot!.open).toBeNull()
   })
 
   it('needs at least the floor of 1,000,000 when a tenth of the supply is less', async () => {
     const row = { total: 5n * U, circulating: 4_000_000n * U, executed: false }
-    expect((await collectRawEpoch(await governed(9, { ballot: async () => row }), 5, NO_SPEND)).raw.ballot!.open).toEqual({
+    expect((await collectRawEpoch(await governed(9, { ballot: async () => row }), 8, NO_SPEND)).raw.ballot!.open).toEqual({
       epoch: 9,
       deposited: 5n * U,
       needed: 1_000_000n * U,
@@ -380,7 +412,7 @@ describe('the ballot', () => {
   })
 
   it('rounds a tenth up, as the quorum is "at least", and counts nothing deposited before a first vote', async () => {
-    const { raw } = await collectRawEpoch(await governed(9, { ballot: async () => null, operatorLock: async () => ({ balance: 0n }) }), 5, NO_SPEND)
+    const { raw } = await collectRawEpoch(await governed(9, { ballot: async () => null, operatorLock: async () => ({ balance: 0n }) }), 8, NO_SPEND)
     // No row: the circulating supply is read now: 100,000,000 − 78,500 pool − 0 locked.
     const circulating = 100_000_000n * U - 78_500n * U
     expect(raw.ballot!.open).toEqual({ epoch: 9, deposited: 0n, needed: (circulating + 9n) / 10n })
@@ -388,7 +420,7 @@ describe('the ballot', () => {
 
   it('is absent while the governance is not bootstrapped', async () => {
     const src = await governed(9, { governance: async () => ({ bootstrapped: false, firstBallotEpoch: 0, ballotsTableId: '0x' }) })
-    expect((await collectRawEpoch(src, 5, NO_SPEND)).raw.ballot).toBeNull()
+    expect((await collectRawEpoch(src, 8, NO_SPEND)).raw.ballot).toBeNull()
   })
 })
 

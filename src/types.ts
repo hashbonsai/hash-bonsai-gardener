@@ -45,7 +45,8 @@ export type Facts = {
     circulating: number | null
   } | null
   ballot: {
-    nextBallotEpoch: number
+    /** Worked out from the board as it stands now, so null unless the epoch has only just ended. */
+    nextBallotEpoch: number | null
     open: { epoch: number; deposited: number; needed: number } | null
     /** The most recent executed ballot, if any. */
     executed: {
