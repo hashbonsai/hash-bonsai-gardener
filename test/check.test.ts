@@ -96,12 +96,12 @@ describe('checkReport', () => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 の${term}は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
-    it.each(['バーン', 'Standing', 'Arena', 'Gardener'])('rejects 「%s」 in the Japanese text (the glossary has a Japanese term)', (term) => {
+    it.each(['バーン', '精算', 'Standing', 'Arena', 'Gardener'])('rejects 「%s」 in the Japanese text (the glossary has a Japanese term)', (term) => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 の ${term} は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
     it('accepts the glossary terms and Bonsai in English letters', () => {
-      const ja = 'シーズン 5 は、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。庭師の記録です。'
+      const ja = 'シーズン 5 は、確定後の賞金プールが 310.75 SUI で、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。庭師の記録です。'
       expect(checkReport(report({ ja }), ctx).ok).toBe(true)
     })
     it('lets the English text and the cast use Standing, Arena and Gardener', () => {

@@ -96,6 +96,11 @@ describe('house style in the fixed Japanese text', () => {
     ].join('\n')
     expect(forbiddenTermJaIn(all)).toBeNull()
   })
+  it('says 確定 for settling, as the game does, and not 清算 or 精算', () => {
+    const table = factsTable(sampleFacts(), 'ja').join('\n')
+    expect(table).toContain('確定後の賞金プール (SUI): 310.75')
+    expect(table).not.toMatch(/清算|精算/)
+  })
 })
 
 describe('fallbackReport', () => {

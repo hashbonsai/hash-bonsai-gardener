@@ -31,7 +31,7 @@ const L = {
   extracted: { en: 'Prize pool extracted (SUI)', ja: '取り出した賞金 (SUI)' },
   awarded: { en: 'Prize awarded (SUI)', ja: '配った賞金 (SUI)' },
   seeds: { en: 'Crown Seeds by tier', ja: 'Crown Seed(ティアごと)' },
-  treasury: { en: 'Treasury after settlement (SUI)', ja: '清算後の賞金プール (SUI)' },
+  treasury: { en: 'Treasury after settlement (SUI)', ja: '確定後の賞金プール (SUI)' },
   treasuryNow: { en: 'Treasury, as of now (SUI)', ja: '賞金プール・現時点 (SUI)' },
   mints: { en: 'Minted this epoch', ja: 'このシーズンのミント' },
   mintsTotal: { en: 'Minted in total', ja: '累計のミント' },

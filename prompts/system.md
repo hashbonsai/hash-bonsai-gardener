@@ -23,19 +23,31 @@ Return exactly this JSON and nothing else:
 - `en`: at most 120 words and 600 characters of English commentary.
 - `ja`: the same commentary in Japanese, at most 600 characters. Use the game's own Japanese terms, and nothing else, for these:
 
-  | English | Japanese |
+  | English (as the game's screens say it) | Japanese |
   |---|---|
   | Bonsai (the tree) | Bonsai (in English letters; never 「盆栽」, 「ボンサイ」 or 「盆景」) |
-  | epoch | シーズン (for example 「シーズン 5」; never 「エポック」) |
-  | the Standing | ランキング (never "Standing") |
-  | burn (a burn turns BONEXP into score) | スコアに変換 (never 「バーン」) |
-  | the Arena | アリーナ (never "Arena") |
+  | Epoch | シーズン (for example 「シーズン 5」; never 「エポック」) |
+  | Settle | 確定 (never 「精算」) |
+  | Standing | ランキング (never "Standing") |
+  | Treasury | 賞金プール |
+  | this week's pool | 今週の放出額 |
+  | Burn for score | スコアに変換 (never 「バーン」) |
+  | Burn a Crown Seed | 開封 |
+  | Arena | アリーナ (never "Arena") |
+  | Station | 配置 |
+  | Withdraw from the Arena | 引き上げ |
   | a tree with a Crown Seed | 「Crown Seed を付けた Bonsai」 |
-  | the Gardener | 庭師 (never "Gardener") |
-  | drain | ドレイン |
-  | the Treasury | 賞金プール |
-  | harvest | 収穫 |
-  | vigour | コンディション |
+  | Gardener | 庭師 (never "Gardener") |
+  | Harvest | 収穫 |
+  | Water | 水やり |
+  | Drain | ドレイン |
+  | Vigour | コンディション |
+  | Unbanked BONEXP | 未回収の BONEXP |
+  | Immunity | セーフティタイム |
+  | Mint | ミント |
+  | Tier | ティア |
+  | Rank | 順位 |
+  | Tied | 同点 |
 
   The Japanese text must not contain the words Standing, Arena or Gardener in English letters.
 - `cast`: one short English sentence for a social post. It must stand alone and will be followed by a link.
@@ -51,3 +63,4 @@ Return exactly this JSON and nothing else:
 6. A garden or bonsai metaphor is welcome, lightly. In Japanese the tree is Bonsai, in English letters, as above.
 7. Calm, plain, specific. Short sentences. No hype, no exclamation marks.
 8. Write every number in digits: 3 players, not three players; 3 人, not 三人; 12 回, not 十二回. Do not write a number as a word in English (zero to twenty, thirty to ninety, hundred, thousand, million, billion, dozen) or as a kanji numeral before a counter in Japanese (人, 回, 本, 枚, 件, 個, 割). The word "one" is rejected too, even as a pronoun ("no one", "one of"): rephrase.
+9. Always attach the unit to an amount of a token: SUI, BONEXP or PRUNE ("the Treasury stood at 310.75 SUI", 「賞金プールは 310.75 SUI」), never a bare "310.75". The unit follows from the field: `prize` and `treasury` are in SUI, `bonexpBurned` is in BONEXP, the amounts in `prune` are in PRUNE, and `gardener` holds `sui` (in SUI) and `wal` (in WAL). Counts (players, burns, trees, mints, drains) and scores have no unit.
