@@ -9,6 +9,7 @@ import {
   JAPANESE_SPELLINGS_RULED_OUT,
   LIMITS,
   numberWordIn,
+  pruneReleasedSentenceIn,
   ruledOutJapaneseSpellingIn,
   VOTE_WORDS,
   voteWordIn,
@@ -61,6 +62,13 @@ describe('policy', () => {
     expect(numberWordIn('hundreds of burns')).toBe('hundreds')
     expect(numberWordIn('十二回')).toBe('十二回')
     expect(numberWordIn('12 players, 40 burns, 12 人')).toBeNull()
+  })
+  it('finds a Japanese sentence that uses 放出 about PRUNE, and only within one sentence', () => {
+    expect(pruneReleasedSentenceIn('PRUNE が放出されました。')).toBe('PRUNE が放出されました')
+    expect(pruneReleasedSentenceIn('放出額は 7 SUI です。PRUNE を配布しました。')).toBeNull()
+    expect(pruneReleasedSentenceIn('放出額は 7 SUI です\nPRUNE を配布しました')).toBeNull()
+    expect(pruneReleasedSentenceIn('放出額は 7 SUI で、PRUNE も出ました。')).toBe('放出額は 7 SUI で、PRUNE も出ました')
+    expect(pruneReleasedSentenceIn('賞金プールは 64 SUI です。')).toBeNull()
   })
   it('finds a voting word, in any case', () => {
     expect(voteWordIn('Voting opens')).toBe('voting')

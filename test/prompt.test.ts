@@ -16,6 +16,13 @@ describe('the system prompt', () => {
     expect(prompt).toContain('When `prune` is null, or both amounts are 0, say nothing about PRUNE.')
   })
 
+  it('says PRUNE is 配布 in Japanese, and never 放出, which is the SUI prize’s word', () => {
+    expect(prompt).toContain('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE を配布しました')
+    expect(prompt).toContain('ランキングに 55,000 PRUNE、保有者に 600 PRUNE を配布しました。')
+    expect(prompt).not.toMatch(/PRUNE[^。\n]*が放出されました/)
+    expect(prompt).toContain('放出額')
+  })
+
   it('does not ask for the amount left, nor for what PRUNE is worth', () => {
     expect(prompt).toContain('Say nothing about how much is left or about what PRUNE is worth.')
   })

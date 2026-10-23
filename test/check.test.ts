@@ -115,6 +115,29 @@ describe('checkReport', () => {
     })
   })
 
+  describe('PRUNE is handed out (配布), not released (放出)', () => {
+    const ja = (text: string) => report({ ja: text })
+    it('refuses a sentence with both PRUNE and 放出', () => {
+      const got = reasons(checkReport(ja('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE が放出されました。'), ctx)).join()
+      expect(got).toMatch(/「放出」 is the SUI prize's word.*配布/)
+      expect(got).toContain('ランキングに 100,000 PRUNE')
+    })
+    it('accepts the same sentence with 配布', () => {
+      expect(checkReport(ja('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
+    })
+    it('accepts 放出額 for the SUI prize in a sentence of its own', () => {
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。ランキングに 100,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。\nランキングに 100,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
+    })
+    it('refuses them in one sentence however they are ordered', () => {
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI で、PRUNE は 100,000 を配布しました。'), ctx).ok).toBe(false)
+      expect(checkReport(ja('PRUNE を 100,000 配布し、放出額は 25.5 SUI でした。'), ctx).ok).toBe(false)
+    })
+    it('applies to the Japanese text only', () => {
+      expect(checkReport(report({ en: 'Epoch 5 released 100,000 PRUNE to the ranking.' }), ctx).ok).toBe(true)
+    })
+  })
+
   describe('numbers written as words', () => {
     it.each([
       ['zero', 'Zero burns happened.'],

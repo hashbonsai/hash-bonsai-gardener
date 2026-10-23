@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { forbiddenTermJaIn } from '../src/policy'
+import { forbiddenTermJaIn, pruneReleasedSentenceIn } from '../src/policy'
 import { castSuffix, factsTable, fallbackReport, GARDENER_LONG, GARDENER_SHORT_EN, notebookLines, voteAnnouncement, voteResult } from '../src/templates'
 import type { Followup } from '../src/types'
 import { sampleFacts } from './fixtures'
@@ -95,6 +95,8 @@ describe('house style in the fixed Japanese text', () => {
       fallbackReport(sampleFacts(), [f], 'ja'),
     ].join('\n')
     expect(forbiddenTermJaIn(all)).toBeNull()
+    // Nor does any fixed Japanese sentence say PRUNE was 放出: the SUI prize has that word.
+    expect(pruneReleasedSentenceIn(all)).toBeNull()
   })
   it('uses the screens’ wording for burns, the epoch’s pool and the prize awarded', () => {
     const table = factsTable(sampleFacts(), 'ja').join('\n')

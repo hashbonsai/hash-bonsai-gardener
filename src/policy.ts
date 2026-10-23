@@ -74,6 +74,18 @@ export function forbiddenTermJaIn(text: string): string | null {
 }
 
 /**
+ * 「放出額」 is the SUI prize's word on the game's screens; a PRUNE handout is 「配布」.
+ * Returns the first Japanese sentence that has both PRUNE and 「放出」, or null.
+ * Sentences end at 。！？ or a line break.
+ */
+export function pruneReleasedSentenceIn(text: string): string | null {
+  for (const sentence of text.split(/[。！？!?\n]/)) {
+    if (sentence.includes('PRUNE') && sentence.includes('放出')) return sentence.trim()
+  }
+  return null
+}
+
+/**
  * The first Japanese spelling the glossary rules out, or null. Used on text
  * that is not itself Japanese copy (an observation's sentence), where an
  * English word like "Standing" is fine but a banned Japanese spelling is not.
