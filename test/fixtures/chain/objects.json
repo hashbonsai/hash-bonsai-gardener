@@ -1,0 +1,148 @@
+{
+  "EpochBoard": {
+    "type": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::EpochBoard",
+    "json": {
+      "ends_at_ms": "1792847579247",
+      "epoch": "4",
+      "id": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+      "scores": {
+        "id": "0xd9edb90cb1e9a55f9a197c088b7a793d12d087c512c0e4e746ecb3641b2430ee",
+        "size": "4"
+      },
+      "top": [
+        {
+          "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+          "score": "25459950000000"
+        },
+        {
+          "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+          "score": "19219881523342"
+        },
+        {
+          "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+          "score": "300998250000"
+        }
+      ]
+    }
+  },
+  "GameBank": {
+    "type": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::GameBank",
+    "json": {
+      "dev_pool": "2320000000",
+      "id": "0x84a01088ca67ec3dfb152615dbfe3447149097fb406f053265eabdc2c6112f12",
+      "total_minted": "108",
+      "treasury": "65366320000",
+      "variation_cursors": [
+        "51",
+        "30",
+        "20",
+        "5",
+        "2"
+      ]
+    }
+  },
+  "Arena": {
+    "type": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::bonsai::Arena",
+    "json": {
+      "entries": {
+        "id": "0xdc88f1c38aca0cc8ae6732207749e7edfab3664d99f3d1fd9f792918ad58ede2",
+        "size": "10"
+      },
+      "id": "0x928e28c83ea2fb44b694ab2209b0fe4d239031c52ddfd910d57e8b37fc83d4fe",
+      "stationed": "10",
+      "stationed_counts": {
+        "contents": [
+          {
+            "key": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+            "value": "3"
+          },
+          {
+            "key": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+            "value": "3"
+          },
+          {
+            "key": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+            "value": "1"
+          },
+          {
+            "key": "0xd3515087f456ac7c6fbf47a7d69728ced4efb425fb2ef107586af900948a4a73",
+            "value": "1"
+          },
+          {
+            "key": "0x737a6eb151951bc163109f0a1c22893ccc36f0ba5b5985d61cede118954aa949",
+            "value": "1"
+          },
+          {
+            "key": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+            "value": "1"
+          }
+        ]
+      }
+    }
+  },
+  "Distributor": {
+    "type": "0x2b56cac54d40b764383602c155833cc13d645f61a4cb29f06d1d97419fc4c19e::distributor::Distributor<0x2b56cac54d40b764383602c155833cc13d645f61a4cb29f06d1d97419fc4c19e::prune::PRUNE>",
+    "json": {
+      "arena_id": "0x928e28c83ea2fb44b694ab2209b0fe4d239031c52ddfd910d57e8b37fc83d4fe",
+      "board_id": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+      "claimed": {
+        "id": "0x03a78b252d384d8791a3e3a7a2b6e24b598539853408060891060e97b46a07ab",
+        "size": "0"
+      },
+      "emissions": {
+        "id": "0x82b2a94abf74640e32258c2b482ade390776e3ca8008810ebfa1e3c28bcd361f",
+        "size": "0"
+      },
+      "holder_claimed": {
+        "id": "0x3905510a9e046db7c4018079b9fbd267972ff7e599eb927948e997622db8b514",
+        "size": "0"
+      },
+      "holder_counts": {
+        "id": "0x9a8b54124244d01f46c5039f97c2b11fa2987555720c15d6cd2354add960fe2d",
+        "size": "0"
+      },
+      "holder_emissions": {
+        "id": "0x492c880945edbb45899b855b4b9a69f800a579c8ad14eff11180757a37e188ba",
+        "size": "0"
+      },
+      "holder_unallocated": "30000000000000000",
+      "id": "0x0f1cc71f7e03381d196f16d621a373701403f50e8a44d31f2593fbacfb0a9c00",
+      "next_epoch": "5",
+      "pool": "85000000000000000",
+      "rate_bps": "150",
+      "start_epoch": "5",
+      "unallocated": "55000000000000000",
+      "version": "1"
+    }
+  },
+  "Governance": {
+    "type": "0x2b56cac54d40b764383602c155833cc13d645f61a4cb29f06d1d97419fc4c19e::governance::Governance",
+    "json": {
+      "ballots": {
+        "id": "0x2e2c03a5af7ec0b10487dd2c563db0889043cc97daeaadaf3edbd6f68e0c7ecf",
+        "size": "0"
+      },
+      "board_id": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+      "cap": {
+        "generation": "1",
+        "id": "0xa24d610373d4a972f7ffa702e215cb60f8b7e7ea0961c9855f716ed5d071376a"
+      },
+      "config_id": "0xc7f267fc28079e74cfef026d2530c3a68ff23fa8d8e21184f12c9a57738c82ec",
+      "dist_id": "0x0f1cc71f7e03381d196f16d621a373701403f50e8a44d31f2593fbacfb0a9c00",
+      "first_ballot_epoch": "9",
+      "id": "0x6f8cee2fa6a89bd6ed87ebdacbedab93ca71e571e863169e0e20fee32f887804",
+      "lock_id": "0x1de431e1cf9c3f537fa42b8e401652496bb9d0557b2a308f3ecd02573a1bd163",
+      "version": "1"
+    }
+  },
+  "OperatorLock": {
+    "type": "0x2b56cac54d40b764383602c155833cc13d645f61a4cb29f06d1d97419fc4c19e::lock::OperatorLock<0x2b56cac54d40b764383602c155833cc13d645f61a4cb29f06d1d97419fc4c19e::prune::PRUNE>",
+    "json": {
+      "balance": "15000000000000000",
+      "beneficiary": "0x9d67aef54721b53ade29c2d20c4fdaf679c1530c60740fcb6209a7b892c07923",
+      "id": "0x1de431e1cf9c3f537fa42b8e401652496bb9d0557b2a308f3ecd02573a1bd163",
+      "unlock_ms": "1823990742954",
+      "version": "1"
+    }
+  }
+}

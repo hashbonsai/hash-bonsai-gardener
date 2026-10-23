@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2026-10-03T13:03:00.723Z",
+    "transaction": {
+      "digest": "FLvDrTXC2zo5FQfd8aCGeimLPMVVmc7TrmbWBV2Fre1u"
+    },
+    "contents": {
+      "json": {
+        "epoch": "1",
+        "extracted": "8368000000",
+        "awarded": "8367999999"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-10T13:07:16.209Z",
+    "transaction": {
+      "digest": "A5iQJJisaohgLjSwTWay3P92rqWK31T8t1dEJRTkyRnQ"
+    },
+    "contents": {
+      "json": {
+        "epoch": "2",
+        "extracted": "7767200000",
+        "awarded": "7767199998"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-17T13:11:40.766Z",
+    "transaction": {
+      "digest": "HxLrBjkUcTgTu7T8J18eLC47St6TmnTTm8b7HWqVe2Z9"
+    },
+    "contents": {
+      "json": {
+        "epoch": "3",
+        "extracted": "7178480000",
+        "awarded": "7178479998"
+      }
+    }
+  }
+]

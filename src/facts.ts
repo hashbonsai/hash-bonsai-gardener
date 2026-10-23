@@ -24,7 +24,7 @@ export type RawEpoch = {
   burns: { players: number; count: number; bonexp: bigint } | null
   /** Any order, full addresses; the three best are kept. */
   scores: { address: string; score: bigint }[] | null
-  prize: { extracted: bigint; awarded: bigint; seedsByTier: number[]; settlerReward: bigint } | null
+  prize: { extracted: bigint; awarded: bigint; seedsByTier: number[] | null; settlerReward: bigint | null } | null
   treasury: { value: bigint; asOf: 'after-settle' | 'now' } | null
   mints: { cumulative: number; previousCumulative: number | null } | null
   prune: {
@@ -33,9 +33,9 @@ export type RawEpoch = {
     holderCount: number
     tapDivisor: number
     mintsToNextStage: number | null
-    standingRemaining: bigint
-    holderRemaining: bigint
-    circulating: bigint
+    standingRemaining: bigint | null
+    holderRemaining: bigint | null
+    circulating: bigint | null
   } | null
   ballot: {
     nextBallotEpoch: number
@@ -44,7 +44,7 @@ export type RawEpoch = {
   } | null
   arena: { trees: number; seeded: number } | null
   drains: number | null
-  config: { entryFee: bigint; epochLengthMs: number; prizeShape: number; withdrawCap: bigint } | null
+  config: { entryFee: bigint; epochLengthMs: number; prizeShape: number | null; prizeCeilingPercent: number } | null
   tx: { settle: string | null; advance: string | null; execute: string | null }
   gardener: { sui: bigint; wal: bigint; spentThisEpoch: bigint } | null
 }
@@ -76,7 +76,7 @@ export function buildFacts(raw: RawEpoch): Facts {
           extracted: units(raw.prize.extracted),
           awarded: units(raw.prize.awarded),
           seedsByTier: raw.prize.seedsByTier,
-          settlerReward: units(raw.prize.settlerReward),
+          settlerReward: raw.prize.settlerReward === null ? null : units(raw.prize.settlerReward),
         }
       : null,
     treasury: raw.treasury ? { value: units(raw.treasury.value), asOf: raw.treasury.asOf } : null,
@@ -89,9 +89,9 @@ export function buildFacts(raw: RawEpoch): Facts {
           perBonsai: raw.prune.holderCount > 0 ? units(raw.prune.holderEmission) / raw.prune.holderCount : 0,
           tapDivisor: raw.prune.tapDivisor,
           mintsToNextStage: raw.prune.mintsToNextStage,
-          standingRemaining: units(raw.prune.standingRemaining),
-          holderRemaining: units(raw.prune.holderRemaining),
-          circulating: units(raw.prune.circulating),
+          standingRemaining: raw.prune.standingRemaining === null ? null : units(raw.prune.standingRemaining),
+          holderRemaining: raw.prune.holderRemaining === null ? null : units(raw.prune.holderRemaining),
+          circulating: raw.prune.circulating === null ? null : units(raw.prune.circulating),
         }
       : null,
     ballot: raw.ballot
@@ -110,7 +110,7 @@ export function buildFacts(raw: RawEpoch): Facts {
           entryFee: units(raw.config.entryFee),
           epochLengthHours: raw.config.epochLengthMs / 3_600_000,
           prizeShape: raw.config.prizeShape,
-          withdrawCap: units(raw.config.withdrawCap),
+          prizeCeilingPercent: raw.config.prizeCeilingPercent,
         }
       : null,
     tx: raw.tx,

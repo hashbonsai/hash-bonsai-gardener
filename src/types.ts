@@ -24,8 +24,10 @@ export type Facts = {
     extracted: number
     awarded: number
     /** Crown Seeds minted, index = tier. */
-    seedsByTier: number[]
-    settlerReward: number
+    /** Null when the settling transaction could not be read. */
+    seedsByTier: number[] | null
+    /** Null when it could not be told from the transaction. */
+    settlerReward: number | null
   } | null
   treasury: { value: number; asOf: 'after-settle' | 'now' } | null
   mints: { cumulative: number; delta: number } | null
@@ -37,9 +39,10 @@ export type Facts = {
     /** The tap's divisor, 1 = full rate. */
     tapDivisor: number
     mintsToNextStage: number | null
-    standingRemaining: number
-    holderRemaining: number
-    circulating: number
+    /** The three below are read at the time of writing, and are null if the distribution had moved past this epoch by then. */
+    standingRemaining: number | null
+    holderRemaining: number | null
+    circulating: number | null
   } | null
   ballot: {
     nextBallotEpoch: number
@@ -56,8 +59,10 @@ export type Facts = {
   config: {
     entryFee: number
     epochLengthHours: number
-    prizeShape: number
-    withdrawCap: number
+    /** 0 = top-heavy, 1 = middle, 2 = wide; null if the table matches none of the three. */
+    prizeShape: number | null
+    /** The most the epoch's prizes could draw from the Treasury, in percent of it. */
+    prizeCeilingPercent: number
   } | null
   tx: { settle: string | null; advance: string | null; execute: string | null }
   gardener: { sui: number; wal: number; spentThisEpoch: number } | null

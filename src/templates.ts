@@ -57,7 +57,7 @@ export function factsTable(facts: Facts, lang: Lang): string[] {
   if (facts.prize) {
     add({ en: L.extracted.en, ja: `シーズン ${facts.epoch} の${L.extracted.ja}` }, fmt(facts.prize.extracted))
     add(L.awarded, fmt(facts.prize.awarded))
-    add(L.seeds, facts.prize.seedsByTier.map((n, i) => `T${i + 1}×${fmt(n, 0)}`).join(' '))
+    add(L.seeds, facts.prize.seedsByTier === null ? null : facts.prize.seedsByTier.map((n, i) => `T${i + 1}×${fmt(n, 0)}`).join(' '))
   }
   if (facts.treasury) add(facts.treasury.asOf === 'after-settle' ? L.treasury : L.treasuryNow, fmt(facts.treasury.value))
   if (facts.mints) {

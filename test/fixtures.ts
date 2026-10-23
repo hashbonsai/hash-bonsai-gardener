@@ -32,7 +32,7 @@ export function sampleFacts(over: Partial<Facts> = {}): Facts {
     ballot: { nextBallotEpoch: 9, open: null, executed: null },
     arena: { trees: 70, seeded: 18 },
     drains: 22,
-    config: { entryFee: 0.5, epochLengthHours: 168, prizeShape: 1, withdrawCap: 10 },
+    config: { entryFee: 0.5, epochLengthHours: 168, prizeShape: 1, prizeCeilingPercent: 10 },
     tx: { settle: '0xsettle', advance: null, execute: null },
     gardener: { sui: 0.8, wal: 5, spentThisEpoch: 0.01 },
     ...over,

@@ -1,0 +1,180 @@
+{
+  "digest": "FLvDrTXC2zo5FQfd8aCGeimLPMVVmc7TrmbWBV2Fre1u",
+  "sender": {
+    "address": "0xb63cbe45979ecad0eeda4b28b0203d441efc4b3803b075ed94774f39817a1bbf"
+  },
+  "effects": {
+    "timestamp": "2026-10-03T13:03:00.723Z",
+    "objectChanges": {
+      "nodes": [
+        {
+          "idCreated": true,
+          "idDeleted": false,
+          "address": "0xd95ddab59737deee9a87746741878bd63f24a01bd2f769cefd2fa87f0454f602",
+          "inputState": null,
+          "outputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0000000000000000000000000000000000000000000000000000000000000002::coin::Coin<0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI>"
+                },
+                "json": {
+                  "id": "0xd95ddab59737deee9a87746741878bd63f24a01bd2f769cefd2fa87f0454f602",
+                  "balance": "200000000"
+                }
+              }
+            }
+          }
+        },
+        {
+          "idCreated": false,
+          "idDeleted": false,
+          "address": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+          "inputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::EpochBoard"
+                },
+                "json": {
+                  "id": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+                  "epoch": "1",
+                  "ends_at_ms": "1791032452672",
+                  "scores": {
+                    "id": "0xd9edb90cb1e9a55f9a197c088b7a793d12d087c512c0e4e746ecb3641b2430ee",
+                    "size": "3"
+                  },
+                  "top": [
+                    {
+                      "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+                      "score": "7232400000000"
+                    },
+                    {
+                      "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+                      "score": "6868680200000"
+                    },
+                    {
+                      "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+                      "score": "3975164100000"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "outputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::EpochBoard"
+                },
+                "json": {
+                  "id": "0x7f02d59b8b4b9d0a34a16ea2668c9aebb132fae0b1cf6a1ef06a575a87b7a389",
+                  "epoch": "2",
+                  "ends_at_ms": "1791637380723",
+                  "scores": {
+                    "id": "0xd9edb90cb1e9a55f9a197c088b7a793d12d087c512c0e4e746ecb3641b2430ee",
+                    "size": "3"
+                  },
+                  "top": []
+                }
+              }
+            }
+          }
+        },
+        {
+          "idCreated": false,
+          "idDeleted": false,
+          "address": "0x84a01088ca67ec3dfb152615dbfe3447149097fb406f053265eabdc2c6112f12",
+          "inputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::GameBank"
+                },
+                "json": {
+                  "id": "0x84a01088ca67ec3dfb152615dbfe3447149097fb406f053265eabdc2c6112f12",
+                  "dev_pool": "920000000",
+                  "treasury": "83680000000",
+                  "total_minted": "108",
+                  "variation_cursors": [
+                    "51",
+                    "30",
+                    "20",
+                    "5",
+                    "2"
+                  ]
+                }
+              }
+            }
+          },
+          "outputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::GameBank"
+                },
+                "json": {
+                  "id": "0x84a01088ca67ec3dfb152615dbfe3447149097fb406f053265eabdc2c6112f12",
+                  "dev_pool": "920000000",
+                  "treasury": "75112000000",
+                  "total_minted": "108",
+                  "variation_cursors": [
+                    "51",
+                    "30",
+                    "20",
+                    "5",
+                    "2"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "idCreated": true,
+          "idDeleted": false,
+          "address": "0x2b56245fb79bc1a410fbd84a8f41a5be7e6ea4debebe1cc29b7d5b8bf406ccc0",
+          "inputState": null,
+          "outputState": {
+            "asMoveObject": {
+              "contents": {
+                "type": {
+                  "repr": "0x0c8921698a36dac5e48048d782608e62e00f3ed0f2e21f2e0c17b898457d4825::economy::EpochPrize"
+                },
+                "json": {
+                  "id": "0x2b56245fb79bc1a410fbd84a8f41a5be7e6ea4debebe1cc29b7d5b8bf406ccc0",
+                  "epoch": "1",
+                  "awards": [
+                    {
+                      "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+                      "rank": "1",
+                      "tier": 0,
+                      "amount": "4922352941",
+                      "claimed": false
+                    },
+                    {
+                      "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+                      "rank": "2",
+                      "tier": 1,
+                      "amount": "1722823529",
+                      "claimed": false
+                    },
+                    {
+                      "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+                      "rank": "3",
+                      "tier": 1,
+                      "amount": "1722823529",
+                      "claimed": false
+                    }
+                  ],
+                  "pot": "8368000000"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -32,7 +32,7 @@ function raw(over: Partial<RawEpoch> = {}): RawEpoch {
     ballot: { nextBallotEpoch: 9, open: null, executed: null },
     arena: { trees: 70, seeded: 18 },
     drains: 22,
-    config: { entryFee: U / 2n, epochLengthMs: 604_800_000, prizeShape: 1, withdrawCap: 10n * U },
+    config: { entryFee: U / 2n, epochLengthMs: 604_800_000, prizeShape: 1, prizeCeilingPercent: 10 },
     tx: { settle: '0xsettle', advance: '0xadvance', execute: null },
     gardener: { sui: 800_000_000n, wal: 5n * U, spentThisEpoch: 10_000_000n },
     ...over,
@@ -77,7 +77,7 @@ describe('buildFacts', () => {
     expect(f.prune?.standingEmission).toBe(100_000)
   })
   it('converts the config, and the epoch length to hours', () => {
-    expect(f.config).toEqual({ entryFee: 0.5, epochLengthHours: 168, prizeShape: 1, withdrawCap: 10 })
+    expect(f.config).toEqual({ entryFee: 0.5, epochLengthHours: 168, prizeShape: 1, prizeCeilingPercent: 10 })
   })
   it('records the transactions it knows and leaves the rest null', () => {
     expect(f.tx).toEqual({ settle: '0xsettle', advance: '0xadvance', execute: null })

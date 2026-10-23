@@ -1,0 +1,104 @@
+[
+  {
+    "timestamp": "2026-09-26T16:06:47.365Z",
+    "transaction": {
+      "digest": "JEHKu9rMfikGEb2pkDx9U22FgJSZdFCJfyNUzr1pMM3e"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0xd74a1b10a107602ef0a85ef3e61bf632795070e434749a1085c4c03c1b1f6002",
+        "target": "0x42edf69aa8ee26afe2f387168678155fac60202001670ad2dfc1047b7590f22b",
+        "attacker_owner": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "target_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "siphoned": "163113358333",
+        "absorbed": "163113358333",
+        "timestamp_ms": "1790438807298"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T16:07:12.274Z",
+    "transaction": {
+      "digest": "EhH9LAKyDswVitbzWggj2CPT1nbPnVYVwoS2TzV9dKEb"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0xb279fc1bff4ae12036e959157041cd54f2e1aa41451303f17ef429b1bd9b1778",
+        "target": "0xa59a35bb2f2856d78609ceb8992dcd0bf186251e2d6749ce683587c6c5096b7c",
+        "attacker_owner": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "target_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "siphoned": "111505177777",
+        "absorbed": "111505177777",
+        "timestamp_ms": "1790438832197"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T16:07:30.518Z",
+    "transaction": {
+      "digest": "33grtgfhE2mXyecgnTJJDkL12CvNTx9pnovUG41wYNXw"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0xdf807448a13cdc37ecb51bb2833e92df96b1965813171ca737b908d777badba9",
+        "target": "0x4a1a9c0cb6fe7dfb7c86589faae86631c61bc8460dc6f1a1f29f019a210454e3",
+        "attacker_owner": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "target_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "siphoned": "111759793055",
+        "absorbed": "111759793055",
+        "timestamp_ms": "1790438850378"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T17:33:20.024Z",
+    "transaction": {
+      "digest": "CmGbHPvCfzdLwuRWuvWzV4CPfijBHNLrkyEK4DwWeQjP"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0x4a1a9c0cb6fe7dfb7c86589faae86631c61bc8460dc6f1a1f29f019a210454e3",
+        "target": "0xd74a1b10a107602ef0a85ef3e61bf632795070e434749a1085c4c03c1b1f6002",
+        "attacker_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "target_owner": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "siphoned": "243083360138",
+        "absorbed": "243083360138",
+        "timestamp_ms": "1790444000024"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T17:33:38.700Z",
+    "transaction": {
+      "digest": "CDTfKSdkYgUV3ZQygMMbzqToYxaPMoV7a4zvEyYhowN7"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0xa59a35bb2f2856d78609ceb8992dcd0bf186251e2d6749ce683587c6c5096b7c",
+        "target": "0xb279fc1bff4ae12036e959157041cd54f2e1aa41451303f17ef429b1bd9b1778",
+        "attacker_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "target_owner": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "siphoned": "50057554166",
+        "absorbed": "50057554166",
+        "timestamp_ms": "1790444018631"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T17:33:59.666Z",
+    "transaction": {
+      "digest": "LEJEJRKGNPpMG5Wy5CSE16p9mZ4bJWqHmztWGxUTv1E"
+    },
+    "contents": {
+      "json": {
+        "attacker": "0x42edf69aa8ee26afe2f387168678155fac60202001670ad2dfc1047b7590f22b",
+        "target": "0xb678153f63c83253f46245aa26d99983c8ae23288d984c5e33f2694282ace33a",
+        "attacker_owner": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "target_owner": "0xb63cbe45979ecad0eeda4b28b0203d441efc4b3803b075ed94774f39817a1bbf",
+        "siphoned": "38811908333",
+        "absorbed": "38811908333",
+        "timestamp_ms": "1790444039517"
+      }
+    }
+  }
+]

@@ -1,0 +1,512 @@
+[
+  {
+    "timestamp": "2026-09-26T13:00:52.818Z",
+    "transaction": {
+      "digest": "2UgRh5v2v4rKkuKf7Jn4GULByWwDiUZFeg9VPczhoFBq"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "113000000000",
+        "gained": "113000000000",
+        "new_score": "113000000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-26T17:34:55.792Z",
+    "transaction": {
+      "digest": "9tWJpiogQFJLz3nq4Tz8WR6Un3WoMm66X1J3vixQkUWE"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "1000000000000",
+        "gained": "999900000000",
+        "new_score": "1112900000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-28T10:27:50.583Z",
+    "transaction": {
+      "digest": "GeJfL79EMqCFziYd1ocnnJKAkhw5H8RUb8kAgXLG5DNi"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "1",
+        "burned": "1304800000000",
+        "gained": "1300233200000",
+        "new_score": "1300233200000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-28T15:33:04.622Z",
+    "transaction": {
+      "digest": "7E9i3dYbnWUaGg4TdQKazfu72W66YhxrxixcycTMmkvo"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "2000000000000",
+        "gained": "1989000000000",
+        "new_score": "3101900000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-30T03:45:45.131Z",
+    "transaction": {
+      "digest": "7KbPwRSy4Ng8VoAidKrZco5LvksaeT87we6mhtSFaX9F"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "1",
+        "burned": "3963000000000",
+        "gained": "3700253100000",
+        "new_score": "5000486300000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-30T06:33:30.635Z",
+    "transaction": {
+      "digest": "4nESLkEinP62rPVhxuag6zrBjFB923tLQ1ig8S48w7YX"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "2500000000000",
+        "gained": "2306500000000",
+        "new_score": "5408400000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-09-30T23:25:22.930Z",
+    "transaction": {
+      "digest": "5jQzcUSGHaCQ1Ag9s73c6hi73McL2k28iE9MXfHdc5rj"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "1",
+        "burned": "3000000000000",
+        "gained": "2349600000000",
+        "new_score": "2349600000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-01T14:29:13.281Z",
+    "transaction": {
+      "digest": "HeWj5KK9XPztVGPyeFCNMxnBHjEitxozTak8L8zunn3P"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "1",
+        "burned": "849000000000",
+        "gained": "500061000000",
+        "new_score": "5500547300000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-01T15:43:50.262Z",
+    "transaction": {
+      "digest": "4uix9QFYj4GpFB5UwtSCoiWVjuECDCeTYVr5DoF1wRBq"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "2000000000000",
+        "gained": "1147200000000",
+        "new_score": "6555600000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-02T07:19:46.433Z",
+    "transaction": {
+      "digest": "55wZJ8sZhkJXGRwB3GCynNFoiYWExA4X55mYZwz24hLW"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "1",
+        "burned": "2123000000000",
+        "gained": "905034900000",
+        "new_score": "3254634900000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-02T23:32:56.214Z",
+    "transaction": {
+      "digest": "DyoKURJ8fGhKYnvRkmZjtH6j63D8rgsvPNPEX5wisnc5"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "1",
+        "burned": "2097000000000",
+        "gained": "720529200000",
+        "new_score": "3975164100000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-03T01:21:24.362Z",
+    "transaction": {
+      "digest": "FJMsG7L92H6UHgqMx4FnbzEuJSVJoeh2JNxjHbHdxD7y"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "1",
+        "burned": "2000000000000",
+        "gained": "676800000000",
+        "new_score": "7232400000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-03T12:45:53.992Z",
+    "transaction": {
+      "digest": "HRH9M6EzuPXnMDdujYxBA4mogofMcBgnUqp2Nb5kj6v7"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "1",
+        "burned": "4309080000000",
+        "gained": "1368132900000",
+        "new_score": "6868680200000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-03T23:39:58.267Z",
+    "transaction": {
+      "digest": "5u8wJTNxhdeUZHTNCFmiYwkpeASNjKFnFgz69jw8vfF5"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "2",
+        "burned": "10000000000000",
+        "gained": "9999000000000",
+        "new_score": "9999000000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-04T09:02:53.832Z",
+    "transaction": {
+      "digest": "JANvhExFrJ97z5hps3iBQh1f1XKze2keUzgnG3ZbfdUU"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "2",
+        "burned": "3334400000000",
+        "gained": "3333066240000",
+        "new_score": "3333066240000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-05T00:18:04.873Z",
+    "transaction": {
+      "digest": "BHh6FhsGbjoUB9SQx1KyXY55DBgpF1AR9cNHbrdv2a7S"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "2",
+        "burned": "1100000000000",
+        "gained": "1098240000000",
+        "new_score": "1098240000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-05T05:37:38.107Z",
+    "transaction": {
+      "digest": "2ZsU7zZ35sWoaGVDPP5w4M5kYMkFxkJMg5EryRNApgsE"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "2",
+        "burned": "7019000000000",
+        "gained": "7000750600000",
+        "new_score": "10333816840000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-06T05:52:33.071Z",
+    "transaction": {
+      "digest": "Ecg6ghoFg5mwi2mEPUUAm5SNtNMNYEW4MNCxhGwK19SK"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "2",
+        "burned": "3288000000000",
+        "gained": "3239666400000",
+        "new_score": "4337906400000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-06T09:05:23.661Z",
+    "transaction": {
+      "digest": "CgtRkuMWjqTAR4DLoRCdH8JNXr6YpGRnDifWptbQzm4L"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "2",
+        "burned": "8000000000000",
+        "gained": "7855200000000",
+        "new_score": "17854200000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-07T14:28:01.541Z",
+    "transaction": {
+      "digest": "HJNVLWpmDDX85dD3vHtLHWEWpRK2X2NjNq2WKD8MTr4p"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "2",
+        "burned": "523280000000",
+        "gained": "455829208000",
+        "new_score": "10789646048000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-09T05:00:25.235Z",
+    "transaction": {
+      "digest": "FXK9Hq7j9Xy3D1Ghp8UWQx3Utiw5eQYpoSByPUtgkfjL"
+    },
+    "contents": {
+      "json": {
+        "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+        "epoch": "2",
+        "burned": "2128000000000",
+        "gained": "938873600000",
+        "new_score": "938873600000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-10T13:07:16.209Z",
+    "transaction": {
+      "digest": "A5iQJJisaohgLjSwTWay3P92rqWK31T8t1dEJRTkyRnQ"
+    },
+    "contents": {
+      "json": {
+        "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+        "epoch": "3",
+        "burned": "1305622667089",
+        "gained": "1305622667089",
+        "new_score": "1305622667089"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-11T06:28:12.097Z",
+    "transaction": {
+      "digest": "68BgF2BYVHZAyWq9QG6Z5wNmoCJyWBSAnyMJus9AZT1D"
+    },
+    "contents": {
+      "json": {
+        "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+        "epoch": "3",
+        "burned": "3236312363114",
+        "gained": "3235341469405",
+        "new_score": "4540964136494"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-11T16:43:01.611Z",
+    "transaction": {
+      "digest": "EFUhgUQWuvunMGxnL8rbMbFLw5LzgiCNkYYRbEmZDQsL"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "3",
+        "burned": "15000000000000",
+        "gained": "14986500000000",
+        "new_score": "14986500000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-11T19:56:22.191Z",
+    "transaction": {
+      "digest": "D5wtn5e5V6614x1JXEaohQDYKWNbMNY4znZEKCCKRULZ"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "3",
+        "burned": "14046940000000",
+        "gained": "14030083672000",
+        "new_score": "14030083672000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-12T00:14:24.873Z",
+    "transaction": {
+      "digest": "E9Cud9YcFvZiWizcHEej2yGuwgPw4otUYwZaExxmMbuV"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "3",
+        "burned": "1369560000000",
+        "gained": "1367368704000",
+        "new_score": "15397452376000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-12T00:16:27.713Z",
+    "transaction": {
+      "digest": "81AeUYhRZeDtgBXSkrxBzeRx6R7Shf6aq6SHPkDiwVVd"
+    },
+    "contents": {
+      "json": {
+        "player": "0x548a3ee5417836b114b11eff3749368ab799272390a53f8c05d4e353a727e801",
+        "epoch": "3",
+        "burned": "1408377556650",
+        "gained": "1406124152559",
+        "new_score": "1406124152559"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-12T14:29:18.263Z",
+    "transaction": {
+      "digest": "4gD3sLSTnYJMohuzr8tQn1WWHtyqGECmYVs6x9zHERh5"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "3",
+        "burned": "2918000000000",
+        "gained": "2903701800000",
+        "new_score": "18301154176000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-17T13:31:29.465Z",
+    "transaction": {
+      "digest": "3NTRgmbJwVy2WUPKs4c41t1uyk8Cb7DUoGTR9PzLAdQf"
+    },
+    "contents": {
+      "json": {
+        "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+        "epoch": "4",
+        "burned": "13791935541519",
+        "gained": "13791935541519",
+        "new_score": "13791935541519"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-17T16:20:05.053Z",
+    "transaction": {
+      "digest": "3UzAQDK67Zztp2yQDWEbFgDwWdqMqL5NBE7xueC9LpX7"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "4",
+        "burned": "17000000000000",
+        "gained": "17000000000000",
+        "new_score": "17000000000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-19T16:42:05.564Z",
+    "transaction": {
+      "digest": "9SRok9wg8yxbLTK1qp7hYgxau5dvJvwQfYdAMS9ydYbH"
+    },
+    "contents": {
+      "json": {
+        "player": "0x695e3cf0b976e94522a007db3a6b0d10d3323af590655aa036c199ad0ed94627",
+        "epoch": "4",
+        "burned": "5459611729857",
+        "gained": "5427945981823",
+        "new_score": "19219881523342"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-20T02:03:23.192Z",
+    "transaction": {
+      "digest": "3bNid7UH4rmvC4juwq4uxwEwjUdNVAHeHj13TnbLDR4o"
+    },
+    "contents": {
+      "json": {
+        "player": "0x15a0aa8097013d61d2c405bd1bb84a0f75fc78e7d3a0f3ccf523c58c10eab2b9",
+        "epoch": "4",
+        "burned": "304500000000",
+        "gained": "300998250000",
+        "new_score": "300998250000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-20T05:57:41.832Z",
+    "transaction": {
+      "digest": "H9fuJRifuNbeAaghhD1xQhi7bcErQSrHGHaRuMpTnPUA"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "4",
+        "burned": "5500000000000",
+        "gained": "5419150000000",
+        "new_score": "22419150000000"
+      }
+    }
+  },
+  {
+    "timestamp": "2026-10-22T02:26:55.169Z",
+    "transaction": {
+      "digest": "EokzeF9q9oD19rJS96jR8H2DjpsssCz6TeiDAwkTwH9d"
+    },
+    "contents": {
+      "json": {
+        "player": "0xf43e763a36aa2baeb3b8fc7c8217aec0e3d69a57a997a52b918b3e5c3f2206aa",
+        "epoch": "4",
+        "burned": "4000000000000",
+        "gained": "3040800000000",
+        "new_score": "25459950000000"
+      }
+    }
+  }
+]
