@@ -19,15 +19,10 @@
 // Prints the blob id and the transaction digest — both public once sent —
 // never either key.
 import { readFileSync } from 'node:fs'
-import { SuiGrpcClient } from '@mysten/sui/grpc'
 import { Ed25519Keypair } from '@mysten/sui/keypairs/ed25519'
 import { normalizeSuiAddress } from '@mysten/sui/utils'
 import { WalrusClient } from '@mysten/walrus'
-
-const TATUM_URL: Record<'mainnet' | 'testnet', string> = {
-  mainnet: 'https://sui-mainnet-grpc.gateway.tatum.io',
-  testnet: 'https://sui-testnet-grpc.gateway.tatum.io',
-}
+import { createTatumClient } from '../src/tatum'
 
 function arg(name: string): string {
   const i = process.argv.indexOf(`--${name}`)
@@ -49,25 +44,25 @@ async function main() {
   const keypair = Ed25519Keypair.fromSecretKey(secret)
   const address = normalizeSuiAddress(keypair.toSuiAddress())
 
-  const suiClient = new SuiGrpcClient({
-    network,
-    baseUrl: TATUM_URL[network],
-    meta: { 'x-api-key': tatumKey },
-  })
-  const walrus = new WalrusClient({ network, suiClient })
+  const tatum = createTatumClient(network, tatumKey)
+  const walrus = new WalrusClient({ network, suiClient: tatum.client })
 
   const text = `gardener Walrus check, ${new Date().toISOString()}, safe to ignore — this blob cannot be deleted.`
-  console.log(`writing a permanent blob from ${address} on ${network}, ${epochs} epoch(s)...`)
-  const { blobId, blobObject } = await walrus.writeBlob({
-    blob: new TextEncoder().encode(text),
-    deletable: false,
-    epochs,
-    signer: keypair,
-  })
+  console.log(`writing a permanent blob from ${address} on ${network}, ${epochs} epoch(s), reads via ${tatum.host}...`)
+  try {
+    const { blobId, blobObject } = await walrus.writeBlob({
+      blob: new TextEncoder().encode(text),
+      deletable: false,
+      epochs,
+      signer: keypair,
+    })
 
-  console.log(`ok — blob ${blobId}`)
-  console.log(`blob object id: ${blobObject.id}`)
-  console.log(`deletable: ${blobObject.deletable} (must be false), stored through epoch ${blobObject.storage.end_epoch}`)
+    console.log(`ok — blob ${blobId}`)
+    console.log(`blob object id: ${blobObject.id}`)
+    console.log(`deletable: ${blobObject.deletable} (must be false), stored through epoch ${blobObject.storage.end_epoch}`)
+  } finally {
+    tatum.close()
+  }
 }
 
 main().catch((e) => {
