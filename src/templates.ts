@@ -26,10 +26,11 @@ export function fmt(n: number, maxFrac = 2): string {
 const L = {
   epoch: { en: 'Epoch', ja: 'シーズン' },
   players: { en: 'Players', ja: '参加者' },
-  burns: { en: 'Burns', ja: '焼却の回数' },
-  bonexpBurned: { en: 'BONEXP burned', ja: '焼いた BONEXP' },
-  extracted: { en: 'Prize pool extracted (SUI)', ja: '取り出した賞金 (SUI)' },
-  awarded: { en: 'Prize awarded (SUI)', ja: '配った賞金 (SUI)' },
+  burns: { en: 'Burns', ja: 'スコアに変換した回数' },
+  bonexpBurned: { en: 'BONEXP burned', ja: 'スコアに変換した BONEXP' },
+  // The Japanese label names the season: 「シーズン N の放出額」, never 「今週の」 (see `factsTable`).
+  extracted: { en: 'Prize pool extracted (SUI)', ja: '放出額 (SUI)' },
+  awarded: { en: 'Prize awarded (SUI)', ja: 'Crown Seed に封入した賞金 (SUI)' },
   seeds: { en: 'Crown Seeds by tier', ja: 'Crown Seed(ティアごと)' },
   treasury: { en: 'Treasury after settlement (SUI)', ja: '確定後の賞金プール (SUI)' },
   treasuryNow: { en: 'Treasury, as of now (SUI)', ja: '賞金プール・現時点 (SUI)' },
@@ -54,7 +55,7 @@ export function factsTable(facts: Facts, lang: Lang): string[] {
   add(L.burns, facts.burns === null ? null : fmt(facts.burns, 0))
   add(L.bonexpBurned, facts.bonexpBurned === null ? null : fmt(facts.bonexpBurned))
   if (facts.prize) {
-    add(L.extracted, fmt(facts.prize.extracted))
+    add({ en: L.extracted.en, ja: `シーズン ${facts.epoch} の${L.extracted.ja}` }, fmt(facts.prize.extracted))
     add(L.awarded, fmt(facts.prize.awarded))
     add(L.seeds, facts.prize.seedsByTier.map((n, i) => `T${i + 1}×${fmt(n, 0)}`).join(' '))
   }
@@ -80,9 +81,9 @@ export function factsTable(facts: Facts, lang: Lang): string[] {
 
 const METRIC: Record<ObservationMetric, { en: string; ja: string }> = {
   players: { en: 'players in the Standing', ja: 'ランキングの参加者' },
-  burns: { en: 'burns', ja: '焼却の回数' },
-  bonexpBurned: { en: 'BONEXP burned', ja: '焼いた BONEXP' },
-  prizeOut: { en: 'prize awarded', ja: '配った賞金' },
+  burns: { en: 'burns', ja: 'スコアに変換した回数' },
+  bonexpBurned: { en: 'BONEXP burned', ja: 'スコアに変換した BONEXP' },
+  prizeOut: { en: 'prize awarded', ja: 'Crown Seed に封入した賞金' },
   mints: { en: 'mints in the epoch', ja: 'シーズン中のミント' },
   arenaTrees: { en: 'Bonsai in the Arena', ja: 'アリーナの Bonsai' },
   seededTrees: { en: 'Bonsai with a Crown Seed', ja: 'Crown Seed 付きの Bonsai' },

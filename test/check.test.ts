@@ -96,7 +96,7 @@ describe('checkReport', () => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 の${term}は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
-    it.each(['バーン', '精算', 'Standing', 'Arena', 'Gardener'])('rejects 「%s」 in the Japanese text (the glossary has a Japanese term)', (term) => {
+    it.each(['バーン', '精算', '清算', 'Standing', 'Arena', 'Gardener'])('rejects 「%s」 in the Japanese text (the glossary has a Japanese term)', (term) => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 の ${term} は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })

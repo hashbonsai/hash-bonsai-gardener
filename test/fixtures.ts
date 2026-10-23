@@ -41,7 +41,7 @@ export function sampleFacts(over: Partial<Facts> = {}): Facts {
 
 export const CLEAN_REPORT = {
   en: 'Epoch 5 closed with 12 players and 40 burns. The prize pool paid out 25.4 SUI.',
-  ja: 'シーズン 5 は参加者 12 人、焼却 40 回で終わり、賞金は 25.4 SUI でした。',
+  ja: 'シーズン 5 は参加者 12 人、スコアに変換した回数は 40 回で、Crown Seed に封入した賞金は 25.4 SUI でした。',
   cast: 'Epoch 5 closed with 12 players.',
   observations: [{ metric: 'players', direction: 'up', statement: 'Player count should keep growing.' }],
 }

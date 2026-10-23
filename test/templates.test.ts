@@ -96,6 +96,20 @@ describe('house style in the fixed Japanese text', () => {
     ].join('\n')
     expect(forbiddenTermJaIn(all)).toBeNull()
   })
+  it('uses the screens’ wording for burns, the epoch’s pool and the prize awarded', () => {
+    const table = factsTable(sampleFacts(), 'ja').join('\n')
+    expect(table).toContain('スコアに変換した回数: 40')
+    expect(table).toContain('スコアに変換した BONEXP: 8,500.5')
+    expect(table).toContain('シーズン 5 の放出額 (SUI): 25.5')
+    expect(table).toContain('Crown Seed に封入した賞金 (SUI): 25.4')
+    expect(table).not.toMatch(/今週の|焼却|焼いた|取り出した|配った/)
+  })
+  it('uses the same wording in the notebook lines', () => {
+    const f: Followup = { observationId: 'o', fromEpoch: 4, toEpoch: 5, metric: 'prizeOut', before: 20, after: 25, verdict: 'continued' }
+    expect(notebookLines([f], 'ja')[0]).toContain('Crown Seed に封入した賞金')
+    expect(notebookLines([{ ...f, metric: 'burns' }], 'ja')[0]).toContain('スコアに変換した回数')
+    expect(notebookLines([{ ...f, metric: 'bonexpBurned' }], 'ja')[0]).toContain('スコアに変換した BONEXP')
+  })
   it('says 確定 for settling, as the game does, and not 清算 or 精算', () => {
     const table = factsTable(sampleFacts(), 'ja').join('\n')
     expect(table).toContain('確定後の賞金プール (SUI): 310.75')

@@ -27,11 +27,14 @@ Return exactly this JSON and nothing else:
   |---|---|
   | Bonsai (the tree) | Bonsai (in English letters; never 「盆栽」, 「ボンサイ」 or 「盆景」) |
   | Epoch | シーズン (for example 「シーズン 5」; never 「エポック」) |
-  | Settle | 確定 (never 「精算」) |
+  | Settle | 確定 (never 「精算」 or 「清算」) |
   | Standing | ランキング (never "Standing") |
   | Treasury | 賞金プール |
-  | this week's pool | 今週の放出額 |
+  | the pool extracted for an epoch (`prize.extracted`) | 放出額 (in the report write 「シーズン N の放出額」; do not say 「今週の」) |
+  | the prize awarded (`prize.awarded`) | Crown Seed に封入した賞金 |
   | Burn for score | スコアに変換 (never 「バーン」) |
+  | the number of burns (`burns`) | スコアに変換した回数 |
+  | BONEXP burned (`bonexpBurned`) | スコアに変換した BONEXP |
   | Burn a Crown Seed | 開封 |
   | Arena | アリーナ (never "Arena") |
   | Station | 配置 |

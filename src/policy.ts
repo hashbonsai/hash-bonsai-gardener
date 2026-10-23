@@ -31,12 +31,12 @@ export const VOTE_WORDS = ['vote', 'voting', 'ballot', '投票'] as const
  * the system prompt). These spellings never appear in `ja`:
  *  - Japanese spellings the glossary rules out: the tree is "Bonsai" in English
  *    letters, an epoch is 「シーズン」, a burn is 「スコアに変換」, to settle is
- *    「確定」 (not 「精算」).
+ *    「確定」 (not 「精算」or 「清算」).
  *  - English words that have a Japanese term: Standing → ランキング,
  *    Arena → アリーナ, Gardener → 庭師. They are fine in the English text, so
  *    they are checked in `ja` only.
  */
-export const JAPANESE_SPELLINGS_RULED_OUT = ['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算'] as const
+export const JAPANESE_SPELLINGS_RULED_OUT = ['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', '清算'] as const
 export const ENGLISH_WORDS_RULED_OUT_IN_JA = ['Standing', 'Arena', 'Gardener'] as const
 export const FORBIDDEN_TERMS_JA = [...JAPANESE_SPELLINGS_RULED_OUT, ...ENGLISH_WORDS_RULED_OUT_IN_JA] as const
 

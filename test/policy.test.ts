@@ -27,9 +27,9 @@ describe('policy', () => {
     expect([...VOTE_WORDS]).toEqual(['vote', 'voting', 'ballot', '投票'])
   })
   it('pins the Japanese spellings the glossary rules out, and the English words ruled out in Japanese text', () => {
-    expect([...JAPANESE_SPELLINGS_RULED_OUT]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算'])
+    expect([...JAPANESE_SPELLINGS_RULED_OUT]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', '清算'])
     expect([...ENGLISH_WORDS_RULED_OUT_IN_JA]).toEqual(['Standing', 'Arena', 'Gardener'])
-    expect([...FORBIDDEN_TERMS_JA]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', 'Standing', 'Arena', 'Gardener'])
+    expect([...FORBIDDEN_TERMS_JA]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', '清算', 'Standing', 'Arena', 'Gardener'])
   })
   it('pins the limits', () => {
     expect(LIMITS).toEqual({ commentaryChars: 600, commentaryWordsEn: 120, castBytes: 320, observations: { min: 0, max: 3 } })
@@ -45,6 +45,7 @@ describe('policy', () => {
     expect(forbiddenTermJaIn('エポック 5')).toBe('エポック')
     expect(forbiddenTermJaIn('バーンが増えた')).toBe('バーン')
     expect(forbiddenTermJaIn('精算後の賞金プール')).toBe('精算')
+    expect(forbiddenTermJaIn('清算後の賞金プール')).toBe('清算')
     expect(forbiddenTermJaIn('確定後の賞金プール')).toBeNull()
     expect(forbiddenTermJaIn('Standing の上位')).toBe('Standing')
     expect(forbiddenTermJaIn('Arena の木')).toBe('Arena')
