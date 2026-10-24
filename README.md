@@ -146,4 +146,4 @@ test/                              unit tests; test/fixtures/chain holds real ma
 
 ## License
 
-MIT.
+MIT. See [LICENSE](LICENSE).
