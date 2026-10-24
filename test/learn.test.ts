@@ -27,6 +27,11 @@ describe('metricValue', () => {
     expect(metricValue(sampleFacts({ prize: null, arena: null }), 'prizeOut')).toBeNull()
     expect(metricValue(sampleFacts({ arena: null }), 'seededTrees')).toBeNull()
   })
+  it('reads the mints of the epoch as unknown when only the total is known', () => {
+    expect(metricValue(sampleFacts({ mints: { cumulative: 108, delta: null } }), 'mints')).toBeNull()
+    expect(metricValue(sampleFacts({ mints: { cumulative: 108, delta: 0 } }), 'mints')).toBe(0)
+    expect(metricValue(sampleFacts({ mints: null }), 'mints')).toBeNull()
+  })
 })
 
 describe('followUp', () => {

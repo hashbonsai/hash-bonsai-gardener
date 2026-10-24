@@ -62,7 +62,7 @@ export function factsTable(facts: Facts, lang: Lang): string[] {
   }
   if (facts.treasury) add(facts.treasury.asOf === 'after-settle' ? L.treasury : L.treasuryNow, fmt(facts.treasury.value, DIGITS.sui))
   if (facts.mints) {
-    add(L.mints, fmt(facts.mints.delta, 0))
+    add(L.mints, facts.mints.delta === null ? null : fmt(facts.mints.delta, 0))
     add(L.mintsTotal, fmt(facts.mints.cumulative, 0))
   }
   if (facts.prune) {

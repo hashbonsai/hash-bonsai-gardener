@@ -95,8 +95,14 @@ describe('buildFacts', () => {
       prune: null, ballot: null, arena: null, drains: null, config: null, gardener: null,
     })
   })
-  it('leaves mints null when the previous total is unknown, rather than treating it as zero', () => {
-    expect(buildFacts(raw({ mints: { cumulative: 1_234, previousCumulative: null } })).mints).toBeNull()
+  it('keeps the total and leaves the increase null when the previous total is unknown, rather than treating it as zero', () => {
+    expect(buildFacts(raw({ mints: { cumulative: 1_234, previousCumulative: null } })).mints).toEqual({ cumulative: 1_234, delta: null })
+  })
+  it('keeps a real increase of zero as zero', () => {
+    expect(buildFacts(raw({ mints: { cumulative: 1_234, previousCumulative: 1_234 } })).mints).toEqual({ cumulative: 1_234, delta: 0 })
+  })
+  it('knows nothing of mints when this epoch’s own total is unknown', () => {
+    expect(buildFacts(raw({ mints: null })).mints).toBeNull()
   })
   it('does not divide by zero holders', () => {
     const p = raw().prune!

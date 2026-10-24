@@ -49,6 +49,20 @@ export function sources(over: Partial<Sources> = {}): Sources {
     board: async () => ({ epoch: 6, endsAtMs: T5 + 7 * 24 * HOUR }),
     gameBank: async () => ({ treasury: 360n * U, totalMinted: 1_300 }),
     epochMinted: async (e) => (e === 5 ? 1_300 : e === 4 ? 1_200 : null),
+    // The settle transaction above changes no rules, so the board's own field is what a round reads.
+    currentRules: async () => ({
+      value: {
+        tiers: [
+          { max_rank: '1', amount_per_slot: String(60n * U) },
+          { max_rank: '3', amount_per_slot: String(30n * U) },
+          { max_rank: '10', amount_per_slot: String(12n * U) },
+          { max_rank: '20', amount_per_slot: String(6n * U) },
+        ],
+        buyback_bps: '800',
+        span_ms: '604800000',
+        standing_fee_sui: '500000000',
+      },
+    }),
     arena: async () => ({ stationed: 70, seeded: 18 }),
     distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: 6, unallocated: 49_500n * U, holderUnallocated: 29_000n * U, pool: 78_500n * U }),
     governance: async () => ({ bootstrapped: true, firstBallotEpoch: 9, ballotsTableId: '0xtable' }),

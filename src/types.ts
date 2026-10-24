@@ -30,7 +30,8 @@ export type Facts = {
     settlerReward: number | null
   } | null
   treasury: { value: number; asOf: 'after-settle' | 'now' } | null
-  mints: { cumulative: number; delta: number } | null
+  /** `delta` is null when the count at the end of the epoch before was not kept; the total is still known. */
+  mints: { cumulative: number; delta: number | null } | null
   prune: {
     standingEmission: number
     holderEmission: number

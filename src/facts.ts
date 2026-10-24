@@ -57,10 +57,10 @@ export function buildFacts(raw: RawEpoch): Facts {
         .map((s) => ({ address: shortAddress(s.address), score: units(s.score) }))
     : null
 
-  const mints =
-    raw.mints && raw.mints.previousCumulative !== null
-      ? { cumulative: raw.mints.cumulative, delta: raw.mints.cumulative - raw.mints.previousCumulative }
-      : null
+  // The total stands on its own; the increase needs the count of the epoch before.
+  const mints = raw.mints
+    ? { cumulative: raw.mints.cumulative, delta: raw.mints.previousCumulative === null ? null : raw.mints.cumulative - raw.mints.previousCumulative }
+    : null
 
   return {
     schema: FACTS_SCHEMA,

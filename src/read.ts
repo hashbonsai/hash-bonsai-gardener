@@ -35,6 +35,8 @@ export type GameIds = {
   operatorLock: string
   /** The package that first declared the types added in v4 (`EpochMintedKey`); upgrades do not change it. */
   epochKeyPackageId: string
+  /** The package that first declared `EpochRulesKey` (v2, not the one above); upgrades do not change it. */
+  epochRulesKeyPackageId: string
   /** The coin type of WAL on this network. */
   walType: string
 }
@@ -150,6 +152,16 @@ export async function readEpochMinted(client: GrpcReader, ids: GameIds, epoch: n
   const v = field(r, 'value')
   if (typeof v !== 'string' || !/^\d+$/.test(v)) throw new Error(`minted at the end of epoch ${epoch}: not an unsigned integer`)
   return Number(v)
+}
+
+/**
+ * The rules field on the board as it stands now: the `Field` object, whose `value` is the rules.
+ * The game writes it only when an epoch is rolled (and once, for an epoch rolled before v2, when
+ * someone seals it). Null if the board has none. `EpochRulesKey` is an empty struct, which BCS
+ * writes as the single byte of its placeholder field.
+ */
+export async function readCurrentRules(client: GrpcReader, ids: GameIds): Promise<Json | null> {
+  return row(client, ids.epochBoard, `${ids.epochRulesKeyPackageId}::economy::EpochRulesKey`, new Uint8Array([0]), 'the board’s rules field')
 }
 
 export async function readBalances(client: GrpcReader, ids: GameIds, owner: string): Promise<{ sui: bigint; wal: bigint }> {

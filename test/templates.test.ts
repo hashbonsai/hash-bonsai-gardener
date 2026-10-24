@@ -37,6 +37,20 @@ describe('factsTable', () => {
     expect(t).not.toMatch(/Players|Prize|Treasury|Top scores/)
     expect(t).toContain('Burns: 40')
   })
+  it('lists both mint figures when the increase is known', () => {
+    expect(factsTable(sampleFacts({ mints: { cumulative: 1_234, delta: 56 } }), 'en')).toEqual(expect.arrayContaining(['Minted this epoch: 56', 'Minted in total: 1,234']))
+    expect(factsTable(sampleFacts({ mints: { cumulative: 1_234, delta: 56 } }), 'ja')).toEqual(expect.arrayContaining(['このシーズンのミント: 56', '累計のミント: 1,234']))
+  })
+  it('shows only the total, with no row for this epoch’s mints, when the increase is not known', () => {
+    for (const lang of ['en', 'ja'] as const) {
+      const t = factsTable(sampleFacts({ mints: { cumulative: 108, delta: null } }), lang).join('\n')
+      expect(t).toContain(lang === 'en' ? 'Minted in total: 108' : '累計のミント: 108')
+      expect(t).not.toMatch(/Minted this epoch|このシーズンのミント|null/)
+    }
+  })
+  it('shows a real zero increase as zero', () => {
+    expect(factsTable(sampleFacts({ mints: { cumulative: 108, delta: 0 } }), 'en')).toContain('Minted this epoch: 0')
+  })
   it('says when the Treasury figure is only a current reading', () => {
     expect(factsTable(sampleFacts({ treasury: { value: 1, asOf: 'now' } }), 'en').join('\n')).toMatch(/as of now/)
   })

@@ -213,6 +213,17 @@ describe('acceptObservations', () => {
   it('drops an observation whose statement holds a number that is not a fact', () => {
     expect(acceptObservations([obs({ statement: 'Expect 77 players.' })], facts)).toEqual([])
   })
+  it('drops an observation about mints when the increase is unknown, though the total is known', () => {
+    const totalOnly = sampleFacts({ mints: { cumulative: 108, delta: null } })
+    expect(acceptObservations([obs({ metric: 'mints' })], totalOnly)).toEqual([])
+    expect(acceptObservations([obs({ metric: 'mints' })], sampleFacts({ mints: { cumulative: 108, delta: 4 } })).map((o) => o.baseline)).toEqual([4])
+  })
+  it('lets a report quote the total of mints when only the total is known, and nothing the model made up', () => {
+    const totalOnly = sampleFacts({ mints: { cumulative: 108, delta: null }, players: 12 })
+    const text = 'Epoch 5 closed with 12 players. 108 Bonsai have been minted in total.'
+    expect(checkReport(report({ en: text }), { ...ctx, facts: totalOnly }).ok).toBe(true)
+    expect(reasons(checkReport(report({ en: 'Epoch 5 closed with 12 players. 56 Bonsai were minted.' }), { ...ctx, facts: totalOnly })).join()).toMatch(/56/)
+  })
   it('keeps at most three', () => {
     expect(acceptObservations(Array.from({ length: 5 }, () => obs({})), facts)).toHaveLength(3)
   })

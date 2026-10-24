@@ -12,7 +12,7 @@ export function metricValue(facts: Facts, metric: ObservationMetric): number | n
     case 'prizeOut':
       return facts.prize ? facts.prize.awarded : null
     case 'mints':
-      return facts.mints ? facts.mints.delta : null
+      return facts.mints?.delta ?? null
     case 'arenaTrees':
       return facts.arena ? facts.arena.trees : null
     case 'seededTrees':

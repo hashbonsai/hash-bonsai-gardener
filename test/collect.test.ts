@@ -29,6 +29,7 @@ async function mainnetSources(): Promise<Sources> {
     board: async () => ({ epoch: 4, endsAtMs: 1_792_847_579_247 }),
     gameBank: async () => ({ treasury: 65_366_320_000n, totalMinted: 108 }),
     epochMinted: async () => null,
+    currentRules: async () => null,
     arena: async () => ({ stationed: 10, seeded: 7 }),
     distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: 5, unallocated: 55_000n * U, holderUnallocated: 30_000n * U, pool: 85_000n * U }),
     governance: async () => ({ bootstrapped: true, firstBallotEpoch: 9, ballotsTableId: '0xtable' }),
@@ -165,25 +166,35 @@ function settleTx(extra: TransactionChanges['changes'] = []): TransactionChanges
         after: { epoch: '5', awards: [{ tier: 0 }, { tier: 1 }, { tier: 1 }, { tier: 3 }], pot: '1' },
       }),
       change(SUI_COIN_TYPE, { created: true, after: { balance: '500000000' } }),
-      change(`0x2::dynamic_field::Field<${GAME}::economy::EpochRulesKey,${GAME}::economy::EpochRules>`, {
-        before: {
-          value: {
-            tiers: [
-              { max_rank: '1', amount_per_slot: String(60n * U) },
-              { max_rank: '3', amount_per_slot: String(30n * U) },
-              { max_rank: '10', amount_per_slot: String(12n * U) },
-              { max_rank: '20', amount_per_slot: String(6n * U) },
-            ],
-            buyback_bps: '800',
-            span_ms: '604800000',
-            standing_fee_sui: '500000000',
-          },
-        },
-        after: { value: {} },
-      }),
+      change(RULES_FIELD_TYPE, { before: rules(), after: { value: {} } }),
       ...extra,
     ],
   }
+}
+
+const RULES_FIELD_TYPE = `0x2::dynamic_field::Field<${GAME}::economy::EpochRulesKey,${GAME}::economy::EpochRules>`
+
+/** The board's rules field as the chain gives it: the `Field` object, whose `value` is the `EpochRules`. */
+function rules(over: { feeMist?: string; spanMs?: string; buybackBps?: string } = {}) {
+  return {
+    value: {
+      tiers: [
+        { max_rank: '1', amount_per_slot: String(60n * U) },
+        { max_rank: '3', amount_per_slot: String(30n * U) },
+        { max_rank: '10', amount_per_slot: String(12n * U) },
+        { max_rank: '20', amount_per_slot: String(6n * U) },
+      ],
+      buyback_bps: over.buybackBps ?? '800',
+      span_ms: over.spanMs ?? '604800000',
+      standing_fee_sui: over.feeMist ?? '500000000',
+    },
+  }
+}
+
+/** A settlement that changed no rules: the chain lists no change for a value written back unchanged. */
+function settleTxWithoutRules(): TransactionChanges {
+  const tx = settleTx()
+  return { ...tx, changes: tx.changes.filter((c) => c.type !== RULES_FIELD_TYPE) }
 }
 
 async function distributingSources(over: Partial<Sources> = {}): Promise<Sources> {
@@ -194,6 +205,8 @@ async function distributingSources(over: Partial<Sources> = {}): Promise<Sources
     board: async () => ({ epoch: 6, endsAtMs: T5 + 7 * DAY }),
     distributor: async () => ({ bootstrapped: true, startEpoch: 5, nextEpoch: 6, unallocated: 49_500n * U, holderUnallocated: 29_000n * U, pool: 78_500n * U }),
     epochMinted: async (e) => (e === 5 ? 1_300 : e === 4 ? 1_200 : null),
+    // What the board holds now, written when it was rolled to epoch 6.
+    currentRules: async () => rules({ feeMist: '600000000' }),
     settles: async () => [
       { digest: 'SETTLE4', ...at(T4), epoch: 4, extracted: 0n, awarded: 0n },
       { digest: 'SETTLE5', ...at(T5), epoch: 5, extracted: 40n * U, awarded: 40n * U - 1n },
@@ -244,6 +257,107 @@ describe('a distributing epoch (epoch 5, the board on 6)', () => {
   it('counts the mints kept at the end of this epoch and of the one before', async () => {
     const { raw } = await collectRawEpoch(await distributingSources(), 5, NO_SPEND)
     expect(raw.mints).toEqual({ cumulative: 1_300, previousCumulative: 1_200 })
+  })
+
+  it('keeps the total of mints when the epoch before has no count, as the first epoch the game kept one for', async () => {
+    const { raw, problems } = await collectRawEpoch(await distributingSources({ epochMinted: async (e) => (e === 5 ? 108 : null) }), 5, NO_SPEND)
+    expect(problems).toEqual([])
+    expect(raw.mints).toEqual({ cumulative: 108, previousCumulative: null })
+    expect(buildFacts(raw).mints).toEqual({ cumulative: 108, delta: null })
+  })
+
+  it('knows no mints when this epoch’s own count is missing, even if the one before is there', async () => {
+    const { raw } = await collectRawEpoch(await distributingSources({ epochMinted: async (e) => (e === 4 ? 1_200 : null) }), 5, NO_SPEND)
+    expect(raw.mints).toBeNull()
+  })
+
+  it('does not mistake an unreadable count of the epoch before for a missing one: the total stands, with the reason', async () => {
+    const src = await distributingSources({ epochMinted: async (e) => (e === 4 ? Promise.reject(new Error('rpc down')) : 1_300) })
+    const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+    expect(raw.mints).toEqual({ cumulative: 1_300, previousCumulative: null })
+    expect(problems.join()).toMatch(/mint count at the end of epoch 4: rpc down/)
+  })
+
+  describe('the rules in force', () => {
+    /** Sources that count how often the board's own rules field is read. */
+    const counting = async (over: Partial<Sources> = {}) => {
+      const reads = { rules: 0 }
+      const src = await distributingSources({
+        currentRules: async () => {
+          reads.rules += 1
+          return rules({ feeMist: '600000000' })
+        },
+        ...over,
+      })
+      return { src, reads }
+    }
+
+    it('uses the earlier version when the settlement changed the rules, and does not read the board’s field', async () => {
+      const { src, reads } = await counting()
+      const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(raw.config).toEqual({ entryFee: 500_000_000n, epochLengthMs: 604_800_000, prizeShape: 1, prizeCeilingPercent: 8 })
+      expect(problems).toEqual([])
+      expect(reads.rules).toBe(0)
+    })
+
+    it('reads the board’s field when the settlement lists no change to it, while the board is still on the next epoch', async () => {
+      const { src, reads } = await counting({ transaction: async () => settleTxWithoutRules() })
+      const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(problems).toEqual([])
+      expect(reads.rules).toBe(1)
+      expect(raw.config).toEqual({ entryFee: 600_000_000n, epochLengthMs: 604_800_000, prizeShape: 1, prizeCeilingPercent: 8 })
+      // Whole units, the form the report keeps.
+      expect(buildFacts(raw).config).toEqual({ entryFee: 0.6, epochLengthHours: 168, prizeShape: 1, prizeCeilingPercent: 8 })
+    })
+
+    it('is null, and reads nothing, once the board has moved past the next epoch: the field is then a later epoch’s', async () => {
+      const { src, reads } = await counting({ transaction: async () => settleTxWithoutRules(), board: async () => ({ epoch: 7, endsAtMs: 0 }) })
+      const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(raw.config).toBeNull()
+      expect(reads.rules).toBe(0)
+      expect(problems.filter((p) => /rules/.test(p))).toEqual([])
+    })
+
+    it('is null when the settlement created the field: there is no earlier version, and the board’s is the next epoch’s', async () => {
+      const created = settleTxWithoutRules()
+      created.changes.push(change(RULES_FIELD_TYPE, { created: true, before: null, after: rules() }))
+      const { src, reads } = await counting({ transaction: async () => created })
+      const { raw } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(raw.config).toBeNull()
+      expect(reads.rules).toBe(0)
+    })
+
+    it('is null, and reads nothing, when the settlement could not be read: whether it changed the rules is not known', async () => {
+      const { src, reads } = await counting({ transaction: async () => Promise.reject(new Error('not found')) })
+      const { raw } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(raw.config).toBeNull()
+      expect(reads.rules).toBe(0)
+    })
+
+    it('is null if the board moved on between reading the field and checking the board again', async () => {
+      let boards = 0
+      const { src } = await counting({
+        transaction: async () => settleTxWithoutRules(),
+        board: async () => ({ epoch: ++boards === 1 ? 6 : 7, endsAtMs: 0 }),
+      })
+      const { raw, problems } = await collectRawEpoch(src, 5, NO_SPEND)
+      expect(raw.config).toBeNull()
+      expect(problems.filter((p) => /rules/.test(p))).toEqual([])
+    })
+
+    it('is null, with the reason, when the board has no rules field or its shape is wrong', async () => {
+      const none = await collectRawEpoch(await distributingSources({ transaction: async () => settleTxWithoutRules(), currentRules: async () => null }), 5, NO_SPEND)
+      expect(none.raw.config).toBeNull()
+      expect(none.problems.join()).toMatch(/rules in force, read from the board: the board has no rules field/)
+
+      const broken = await collectRawEpoch(
+        await distributingSources({ transaction: async () => settleTxWithoutRules(), currentRules: async () => ({ value: { tiers: 'many' } }) }),
+        5,
+        NO_SPEND,
+      )
+      expect(broken.raw.config).toBeNull()
+      expect(broken.problems.join()).toMatch(/rules in force, read from the board/)
+    })
   })
 
   it('counts drains between the two settlements: from the first, up to but not including the second', async () => {

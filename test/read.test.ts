@@ -7,6 +7,7 @@ import {
   readBalances,
   readBallot,
   readBoard,
+  readCurrentRules,
   readDistributor,
   readEpochMinted,
   readGameBank,
@@ -20,6 +21,8 @@ const fixture = (name: string) => JSON.parse(readFileSync(new URL(`./fixtures/ch
 
 const objects: Record<string, { type: string; json: Record<string, unknown> }> = fixture('objects')
 const V4 = '0x' + 'b'.repeat(64)
+/** The package that first declared `EpochRulesKey`: not the one that declared `EpochMintedKey`. */
+const V2 = '0x' + 'c'.repeat(64)
 const IDS = {
   epochBoard: objects.EpochBoard.json.id as string,
   gameBank: objects.GameBank.json.id as string,
@@ -28,6 +31,7 @@ const IDS = {
   governance: objects.Governance.json.id as string,
   operatorLock: objects.OperatorLock.json.id as string,
   epochKeyPackageId: V4,
+  epochRulesKeyPackageId: V2,
   walType: '0xwal::wal::WAL',
 }
 const ids: GameIds = IDS
@@ -146,6 +150,27 @@ describe('rows of a table or dynamic field', () => {
   it('refuses a count that is not an unsigned integer', async () => {
     const id = rowId(IDS.epochBoard, `${V4}::economy::EpochMintedKey`, u64(5))
     await expect(readEpochMinted(fake({ [id]: { id, value: 'many' } }).client, ids, 5)).rejects.toThrow(/unsigned integer/)
+  })
+})
+
+describe('the board’s rules field', () => {
+  // `EpochRulesKey` is an empty struct: its BCS is the one byte of its placeholder field, and it is
+  // declared in the v2 package, so the id is derived from that package's type, not the v4 one.
+  const rulesId = (pkg: string) => rowId(IDS.epochBoard, `${pkg}::economy::EpochRulesKey`, new Uint8Array([0]))
+  const value = { tiers: [], buyback_bps: '800', span_ms: '604800000', standing_fee_sui: '500000000' }
+
+  it('reads the field at the id derived from the v2 package’s key type and the empty key', async () => {
+    const id = rulesId(V2)
+    const f = fake({ [id]: { id, name: { dummy_field: false }, value } })
+    expect(await readCurrentRules(f.client, ids)).toMatchObject({ value })
+    expect(f.calls.getObjects.at(-1)).toEqual([id])
+  })
+  it('does not find the field under the package of the mint key', async () => {
+    const id = rulesId(V4)
+    expect(await readCurrentRules(fake({ [id]: { id, value } }).client, ids)).toBeNull()
+  })
+  it('answers null for a board with no rules field', async () => {
+    expect(await readCurrentRules(fake().client, ids)).toBeNull()
   })
 })
 

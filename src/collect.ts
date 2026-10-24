@@ -8,7 +8,7 @@ import type {
   TransactionChanges,
 } from './events'
 import type { RawEpoch } from './facts'
-import { big, child, list, num, record, str } from './json'
+import { big, child, list, num, record, str, type Json } from './json'
 import { redact } from './redact'
 import type { BallotState, DistributorState, GovernanceState } from './read'
 
@@ -28,6 +28,8 @@ export type Sources = {
   board(): Promise<{ epoch: number; endsAtMs: number }>
   gameBank(): Promise<{ treasury: bigint; totalMinted: number }>
   epochMinted(epoch: number): Promise<number | null>
+  /** The board's rules field as it stands now (the `Field` object's JSON), or null if there is none. */
+  currentRules(): Promise<Json | null>
   arena(): Promise<{ stationed: number; seeded: number }>
   distributor(): Promise<DistributorState>
   governance(): Promise<GovernanceState>
@@ -94,7 +96,22 @@ export function prizeShapeOf(tiers: { maxRank: number; amountPerSlot: bigint }[]
   return index === -1 ? null : index
 }
 
-const SUI_COIN = /^0x0*2::coin::Coin<0x0*2::sui::SUI>$/
+/** The figures of `EpochRules` that the facts keep, from the board's rules field (the `Field` object's JSON). */
+function rulesIn(field: Json) {
+  const v = child(field, 'value')
+  const tiers = list(v, 'tiers').map((t) => {
+    const tier = record(t, 'tier')
+    return { maxRank: num(tier, 'max_rank'), amountPerSlot: big(tier, 'amount_per_slot') }
+  })
+  return {
+    entryFee: big(v, 'standing_fee_sui'),
+    epochLengthMs: num(v, 'span_ms'),
+    prizeShape: prizeShapeOf(tiers),
+    prizeCeilingPercent: Number(big(v, 'buyback_bps')) / 100,
+  }
+}
+
+const SUI_COIN =/^0x0*2::coin::Coin<0x0*2::sui::SUI>$/
 
 // ── The collector ───────────────────────────────────────────────────────────
 
@@ -212,7 +229,7 @@ export async function collectRawEpoch(src: Sources, epoch: number, options: Coll
     return bank ? { value: bank.treasury, asOf: 'now' as const } : null
   })()
 
-  // ── Mints: the count kept at the end of each epoch ──
+  // ── Mints: the count kept at the end of each epoch. The total needs only this epoch's; the increase also the one before ──
   const mints = minted !== null ? { cumulative: minted, previousCumulative: previousMinted } : null
 
   // ── PRUNE: the emissions the distributor confirmed for this epoch ──
@@ -270,22 +287,25 @@ export async function collectRawEpoch(src: Sources, epoch: number, options: Coll
   const drainCount =
     drains && settle && settlePrevious ? drains.filter((d) => d.timestampMs >= settlePrevious.timestampMs && d.timestampMs < settle.timestampMs).length : null
 
-  // ── Rules in force: the board's rules field as the settling transaction found it ──
+  // ── Rules in force: the board's rules field, as it stood before the settlement ──
   const config = await (async () => {
-    const rules = tx?.changes.find((c) => c.type !== null && c.type.includes('::economy::EpochRulesKey') && c.before)?.before
-    if (!rules) return null
-    return attempt('rules in force', async () => {
-      const v = child(rules, 'value')
-      const tiers = list(v, 'tiers').map((t) => {
-        const tier = record(t, 'tier')
-        return { maxRank: num(tier, 'max_rank'), amountPerSlot: big(tier, 'amount_per_slot') }
-      })
-      return {
-        entryFee: big(v, 'standing_fee_sui'),
-        epochLengthMs: num(v, 'span_ms'),
-        prizeShape: prizeShapeOf(tiers),
-        prizeCeilingPercent: Number(big(v, 'buyback_bps')) / 100,
-      }
+    if (!tx) return null
+    const change = tx.changes.find((c) => c.type !== null && c.type.includes('::economy::EpochRulesKey'))
+    // The settlement changed the rules: the earlier version is this epoch's.
+    const before = change?.before
+    if (before) return attempt('rules in force', async () => rulesIn(before))
+    // The settlement created the field: there was no earlier version.
+    if (change) return null
+    // The settlement writes the rules every time, but a write of the same value is no change to Sui, so
+    // they were the same. Only roll_epoch and seal_epoch_rules write the field, so while the board is
+    // still on the next epoch what it holds now is what this epoch ran under. Later, it may not be.
+    if (!justEnded) return null
+    return attempt('rules in force, read from the board', async () => {
+      const current = await src.currentRules()
+      if (!current) throw new Error('the board has no rules field')
+      const rules = rulesIn(current)
+      // A settlement between the two reads would have written the next epoch's rules in.
+      return (await src.board()).epoch === epoch + 1 ? rules : null
     })
   })()
 
