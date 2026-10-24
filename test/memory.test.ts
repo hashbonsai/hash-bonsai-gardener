@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   decodeRecord,
   encodeRecord,
+  epochsRemembered,
   memwalStore,
   nullStore,
   recallForEpoch,
@@ -87,6 +88,28 @@ describe('records', () => {
     expect(d?.kind).toBe('epoch-facts')
     expect(d?.payload).toMatchObject({ epoch: 5, players: 12, burns: 40 })
     expect(JSON.stringify(d?.payload)).not.toContain('gardener')
+  })
+  it('includes the BONEXP burned, the drains and the Arena, each null when unknown', () => {
+    const full = decodeRecord(records.epochFacts(sampleFacts()))?.payload
+    expect(full).toMatchObject({ bonexpBurned: 8500.5, drains: 22, arenaTrees: 70, seededTrees: 18 })
+    const past = decodeRecord(records.epochFacts(sampleFacts({ arena: null, drains: null, bonexpBurned: null })))?.payload
+    expect(past).toMatchObject({ bonexpBurned: null, drains: null, arenaTrees: null, seededTrees: null })
+  })
+})
+
+describe('epochsRemembered', () => {
+  it('lists the epochs that already have an epoch-facts memory, and ignores everything else', async () => {
+    const store = fakeStore([
+      records.epochFacts(sampleFacts({ epoch: 2 })),
+      records.epochFacts(sampleFacts({ epoch: 3 })),
+      records.observation(observation({ id: 'obs-3-1', epoch: 3 })),
+      'a stranger’s note about epoch 4',
+      'gardener:epoch-facts {not json}\nbroken',
+    ])
+    expect([...(await epochsRemembered(store))].sort()).toEqual([2, 3])
+  })
+  it('is empty for an empty namespace', async () => {
+    expect((await epochsRemembered(fakeStore([]))).size).toBe(0)
   })
 })
 

@@ -127,8 +127,13 @@ export const records = {
       epoch: facts.epoch,
       players: facts.players,
       burns: facts.burns,
+      bonexpBurned: facts.bonexpBurned,
       prizeOut: facts.prize?.awarded ?? null,
       mints: facts.mints?.delta ?? null,
+      drains: facts.drains,
+      // The Arena can only be read as it stands now, so these are null for an epoch long past.
+      arenaTrees: facts.arena?.trees ?? null,
+      seededTrees: facts.arena?.seeded ?? null,
       pruneStanding: facts.prune?.standingEmission ?? null,
       pruneHolder: facts.prune?.holderEmission ?? null,
     }
@@ -197,6 +202,21 @@ export async function recallForEpoch(store: MemoryStore): Promise<Recalled> {
   }
   notes.sort((a, b) => b.epoch - a.epoch)
   return { observations: observations.slice(0, 10), notes: notes.slice(0, 5), blobIds }
+}
+
+/**
+ * The epochs this namespace already holds an `epoch-facts` memory for. The memory itself is the
+ * record of what was written, so a backfill that is run twice, or from two machines, writes each
+ * epoch once.
+ */
+export async function epochsRemembered(store: MemoryStore): Promise<Set<number>> {
+  const found = new Set<number>()
+  for (const m of await store.recall(`${PREFIX}epoch-facts`, 200)) {
+    const d = decodeRecord(m.text)
+    const epoch = d?.kind === 'epoch-facts' ? (d.payload as { epoch?: unknown } | null)?.epoch : undefined
+    if (typeof epoch === 'number' && Number.isInteger(epoch)) found.add(epoch)
+  }
+  return found
 }
 
 export type WriteOutcome = {
