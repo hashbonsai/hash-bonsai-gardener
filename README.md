@@ -35,8 +35,9 @@ A systemd timer runs the program once an hour. Most runs do nothing. A run:
 4. Asks the model for the commentary in English and Japanese, a short post, and up to three
    observations to check next epoch. The answer is checked (below); a failed check gets one
    retry with the reasons; a second failure gives a report of figures alone.
-5. Holds the report as a **draft** for a person to approve (`npm run approve -- <epoch>`), or
-   publishes it: memories first, then the report to Walrus.
+5. Holds the report as a **draft** for a person to approve (`npm run approve -- <epoch>`), reject
+   (figures alone) or have written again (`npm run redo -- <epoch>`), or publishes it: memories
+   first, then the report to Walrus.
 6. Tells the operator where it is, with the post to share.
 
 A draft is saved before anything is published. If Walrus is unreachable, the next round publishes the
@@ -115,6 +116,7 @@ next to `dist/`. See [deploy/README.md](deploy/README.md) for the server, the ti
 | `npm start -- --config <file>` | one round, from the build (what the timer runs) |
 | `npm run approve -- <epoch> [--note "…"]` | approve the waiting draft |
 | `npm run reject -- <epoch> [--note "…"]` | publish it as figures alone |
+| `npm run redo -- <epoch> [--note "…"]` | drop the waiting draft; the next round writes the epoch again, with the note (still counted against the model-call limits) |
 | `npm run backfill -- --config <file> [--namespace <ns>] [--dry-run]` | remember the epochs before the first report |
 | `npx tsx scripts/compare-memory.ts --config <file> --epoch <n>` | one finished epoch written twice, with and without memory, side by side (stores nothing) |
 

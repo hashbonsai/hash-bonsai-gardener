@@ -8,7 +8,7 @@ import { decide, parseDecisionArgs } from '../src/decision'
 import { LlmCallError } from '../src/llm'
 import { chunk, consoleNotifier, discordNotifier, tell } from '../src/notify'
 import { buildReport, readEarlier, sha256Hex } from '../src/report'
-import { applyDecision, assertState, fileStateStore, initialState, memoryStateStore } from '../src/state'
+import { applyDecision, applyRedo, assertState, fileStateStore, initialState, memoryStateStore } from '../src/state'
 import { walrusReportStore, type WalrusLike } from '../src/walrus'
 import { sampleFacts } from './fixtures'
 import { MAINNET } from '../src/sources'
@@ -43,11 +43,27 @@ describe('the state file', () => {
     expect(() => fileStateStore(path, () => initialState(4)).load()).toThrow(/lastReportedEpoch/)
   })
 
+  it('reads a file written before the redo note existed as having none', () => {
+    const path = tempFile('state.json')
+    const { redoNote: _, ...old } = initialState(4)
+    writeFileSync(path, JSON.stringify(old))
+    expect(fileStateStore(path, () => initialState(4)).load().redoNote).toBeNull()
+  })
+
+  it('keeps a redo note through a write and a read', () => {
+    const path = tempFile('state.json')
+    const store = fileStateStore(path, () => initialState(4))
+    store.save({ ...initialState(4), redoNote: { epoch: 5, note: 'Be brief.' } })
+    expect(store.load().redoNote).toEqual({ epoch: 5, note: 'Be brief.' })
+  })
+
   it.each([
     ['schema', { schema: 2 }],
     ['llmCallsMs', { llmCallsMs: ['yesterday'] }],
     ['memoryBacklog', { memoryBacklog: [1] }],
     ['announced', { announced: { opened: 'no', applied: [] } }],
+    ['redoNote', { redoNote: { epoch: 5, note: 7 } }],
+    ['redoNote', { redoNote: 'be brief' }],
     ['pending.status', { pending: { epoch: 5, createdAtMs: 1, status: 'maybe', note: null, draft: {}, memoryWritten: null } }],
   ])('names the field "%s" when it is wrong', (field, patch) => {
     expect(() => assertState({ ...initialState(4), ...patch })).toThrow(new RegExp(field.replace('.', '\\.')))
@@ -76,6 +92,33 @@ describe('applyDecision', () => {
   })
 })
 
+describe('applyRedo', () => {
+  const waiting = () => ({
+    ...initialState(4),
+    pending: { epoch: 5, createdAtMs: 1, status: 'awaiting' as const, note: null, draft: {} as never, memoryWritten: null },
+  })
+  it('drops the waiting draft and keeps a trimmed note, or none', () => {
+    expect(applyRedo(waiting(), 5, '  shorter  ')).toMatchObject({ pending: null, redoNote: { epoch: 5, note: 'shorter' } })
+    expect(applyRedo(waiting(), 5, '   ')).toMatchObject({ pending: null, redoNote: null })
+    expect(applyRedo(waiting(), 5, null)).toMatchObject({ pending: null, redoNote: null })
+  })
+  it('replaces an earlier note that was never used, and changes nothing else', () => {
+    const s = { ...waiting(), redoNote: { epoch: 5, note: 'old' }, lastReportedEpoch: 4, llmCallsMs: [1, 2] }
+    expect(applyRedo(s, 5, null)).toEqual({ ...s, pending: null, redoNote: null })
+  })
+  it('refuses the wrong epoch, no draft, and a draft already decided', () => {
+    expect(() => applyRedo(waiting(), 6, null)).toThrow(/not 6/)
+    expect(() => applyRedo(initialState(4), 5, null)).toThrow(/no draft waiting/)
+    expect(() => applyRedo(applyDecision(waiting(), 5, 'approved', null), 5, null)).toThrow(/already approved.*only a draft still waiting/)
+    expect(() => applyRedo(applyDecision(waiting(), 5, 'rejected', null), 5, null)).toThrow(/already rejected/)
+  })
+  it('does not touch the state it was given', () => {
+    const s = waiting()
+    applyRedo(s, 5, 'x')
+    expect(s.pending.status).toBe('awaiting')
+  })
+})
+
 describe('the approve and reject commands', () => {
   it('reads the epoch and the note, in any order, and ignores the config path', () => {
     expect(parseDecisionArgs(['5'])).toEqual({ epoch: 5, note: null })
@@ -94,6 +137,15 @@ describe('the approve and reject commands', () => {
     })
     expect(decide(['5', '--note', 'too long'], 'rejected', store)).toMatch(/rejected.*figures alone.*with your note.*next hourly round/)
     expect(store.current.pending).toMatchObject({ status: 'rejected', note: 'too long' })
+  })
+  it('redo drops the draft, keeps the note for the next round, and says the limits still apply', () => {
+    const store = memoryStateStore({
+      ...initialState(4),
+      pending: { epoch: 5, createdAtMs: 1, status: 'awaiting', note: null, draft: {} as never, memoryWritten: null },
+    })
+    expect(decide(['5', '--note', 'mention burns'], 'redo', store)).toMatch(/dropped.*writes it again.*with your note.*4 a day, 16 a month/)
+    expect(store.current).toMatchObject({ pending: null, redoNote: { epoch: 5, note: 'mention burns' } })
+    expect(() => decide(['5'], 'redo', store)).toThrow(/no draft waiting/)
   })
 })
 

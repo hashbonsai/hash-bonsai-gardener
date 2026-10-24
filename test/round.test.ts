@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { LlmCallError } from '../src/llm'
 import { NOTIFY_AFTER_MS } from '../src/ready'
-import { applyDecision } from '../src/state'
+import { applyDecision, applyRedo } from '../src/state'
 import { GOOD, HOUR, kit, NOW, T5, U } from './roundkit'
 
 const approve = (k: ReturnType<typeof kit>, note: string | null = null) => k.state.save(applyDecision(k.state.load(), 5, 'approved', note))
@@ -157,6 +157,125 @@ describe('a report that needs a person’s approval', () => {
     const { report } = k.store.saved[0]
     expect(report).toMatchObject({ text: { en: '', ja: '' }, fallback: true, fallbackReason: 'withheld' })
     expect(k.memory.texts.map((t) => t.split(' ')[0])).toEqual(['gardener:epoch-facts', 'gardener:editor-note'])
+  })
+})
+
+describe('writing a waiting draft again (redo)', () => {
+  const redo = (k: ReturnType<typeof kit>, note: string | null = null) => k.state.save(applyRedo(k.state.load(), 5, note))
+  const OTHER = { ...GOOD, en: 'Epoch 5 closed with 2 players. Burns came to 3.', observations: [{ metric: 'burns', direction: 'down', statement: 'Burns may ease.' }] }
+
+  it('drops the draft and writes the epoch again next round, handing the model the note for that draft only', async () => {
+    const k = kit({ llmOutputs: [GOOD, OTHER] })
+    await k.round()
+    redo(k, 'Mention the burns.')
+    // Dropped: nothing waiting, nothing stored, remembered or counted as reported.
+    expect(k.state.current).toMatchObject({ pending: null, lastReportedEpoch: 4, redoNote: { epoch: 5, note: 'Mention the burns.' } })
+    expect(k.store.saved).toHaveLength(0)
+    expect(k.memory.texts).toHaveLength(0)
+
+    k.advance(HOUR)
+    expect(await k.round()).toEqual({ kind: 'awaiting-approval', epoch: 5 })
+    expect(k.llm.calls).toHaveLength(2)
+    expect(k.llm.calls[0].system).not.toContain('Mention the burns.')
+    expect(k.llm.calls[1].system).toContain('(epoch 5) Mention the burns.')
+    // The new draft is the second text, waits for a decision like any other, and the note is spent.
+    expect(k.state.current.pending).toMatchObject({ epoch: 5, status: 'awaiting', note: null })
+    expect(k.state.current.pending!.draft.commentary.en).toBe(OTHER.en)
+    expect(k.state.current.redoNote).toBeNull()
+    expect(k.notifier.messages.at(-1)).toContain('npm run redo -- 5')
+  })
+
+  it('keeps the observations of the draft that goes out, and none of the one dropped', async () => {
+    const k = kit({ llmOutputs: [GOOD, OTHER] })
+    await k.round()
+    redo(k)
+    await k.round()
+    approve(k)
+    expect(await k.round()).toMatchObject({ kind: 'published', epoch: 5 })
+    const observations = k.memory.texts.filter((t) => t.startsWith('gardener:observation'))
+    expect(observations).toHaveLength(1)
+    expect(observations[0]).toContain('Burns may ease.')
+    expect(k.store.saved[0].report.text.en).toBe(OTHER.en)
+  })
+
+  it('writes the note to no memory: the new draft is the one the operator approves or rejects, with a note of its own', async () => {
+    const k = kit({ llmOutputs: [GOOD, OTHER] })
+    await k.round()
+    redo(k, 'Mention the burns.')
+    await k.round()
+    approve(k)
+    await k.round()
+    expect(k.memory.texts.filter((t) => t.startsWith('gardener:editor-note'))).toEqual([])
+  })
+
+  it('does not call the model again at once: the next round does, as one more call against the day’s limit', async () => {
+    const k = kit({ llmOutputs: [GOOD, OTHER] })
+    await k.round()
+    redo(k)
+    expect(k.llm.calls).toHaveLength(1)
+    expect(k.state.current.llmCallsMs).toEqual([NOW])
+    await k.round()
+    expect(k.state.current.llmCallsMs).toEqual([NOW, NOW])
+  })
+
+  it('is stopped by the day’s limit of model calls, keeps the note, and goes on the next UTC day', async () => {
+    // Three earlier calls today, and this draft's is the fourth.
+    const k = kit({ llmOutputs: [GOOD, OTHER], state: { llmCallsMs: [30, 20, 10].map((m) => NOW - m * 60_000) } })
+    await k.round()
+    expect(k.state.current.llmCallsMs).toHaveLength(4)
+    redo(k, 'Mention the burns.')
+
+    k.advance(HOUR)
+    expect(await k.round()).toMatchObject({ kind: 'blocked', epoch: 5 })
+    expect(k.llm.calls).toHaveLength(1)
+    expect(k.notifier.messages.join()).toMatch(/4 times today/)
+    expect(k.state.current).toMatchObject({ pending: null, redoNote: { epoch: 5, note: 'Mention the burns.' } })
+
+    k.advance(24 * HOUR)
+    expect(await k.round()).toMatchObject({ kind: 'awaiting-approval', epoch: 5 })
+    expect(k.llm.calls).toHaveLength(2)
+    expect(k.llm.calls[1].system).toContain('Mention the burns.')
+  })
+
+  it('is stopped by the month’s limit too', async () => {
+    // Fifteen calls on earlier days of the month (at most three a day, so the day's limit is not what stops it).
+    const earlier = Array.from({ length: 15 }, (_, i) => T5 - 7 * 24 * HOUR + (i % 7) * 24 * HOUR + HOUR)
+    const k = kit({ llmOutputs: [GOOD, OTHER], state: { llmCallsMs: earlier } })
+    await k.round()
+    redo(k)
+    k.advance(HOUR)
+    expect(await k.round()).toMatchObject({ kind: 'blocked', epoch: 5 })
+    expect(k.llm.calls).toHaveLength(1)
+    expect(k.notifier.messages.join()).toMatch(/16 times this month/)
+  })
+
+  it('cannot be used on a draft that is approved or rejected, or when none waits', async () => {
+    const k = kit()
+    expect(() => redo(k)).toThrow(/no draft waiting/)
+    await k.round()
+    approve(k)
+    expect(() => redo(k)).toThrow(/already approved/)
+    expect(k.state.current.pending).toMatchObject({ epoch: 5, status: 'approved' })
+
+    const r = kit()
+    await r.round()
+    reject(r)
+    expect(() => redo(r)).toThrow(/already rejected/)
+    expect(r.state.current.pending).toMatchObject({ status: 'rejected' })
+  })
+
+  it('does not hand a note meant for another epoch to the model, and drops it', async () => {
+    const k = kit({ state: { redoNote: { epoch: 3, note: 'An old note.' } } })
+    await k.round()
+    expect(k.llm.calls[0].system).not.toContain('An old note.')
+    expect(k.state.current.redoNote).toBeNull()
+  })
+
+  it('does not use up the note in a dry run', async () => {
+    const k = kit({ config: { dryRun: true }, state: { redoNote: { epoch: 5, note: 'Be brief.' } } })
+    await k.round()
+    expect(k.llm.calls[0].system).toContain('Be brief.')
+    expect(k.state.current.redoNote).toEqual({ epoch: 5, note: 'Be brief.' })
   })
 })
 

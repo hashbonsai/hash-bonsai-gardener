@@ -26,7 +26,7 @@ On a development machine:
 
 ```
 npm ci
-npm run build          # dist/gardener.mjs, approve.mjs, reject.mjs, backfill.mjs
+npm run build          # dist/gardener.mjs, approve.mjs, reject.mjs, redo.mjs, backfill.mjs
 ```
 
 Copy `dist/`, `prompts/`, `package.json` and `package-lock.json` to `/opt/gardener`
@@ -92,12 +92,22 @@ Every line in the journal has passed through the redaction; there are no secrets
 ```
 sudo -u gardener env GARDENER_CONFIG=/etc/gardener/config.json npm run approve -- 5 --note "Shorter next time."
 sudo -u gardener env GARDENER_CONFIG=/etc/gardener/config.json npm run reject  -- 5 --note "Too cheerful."
+sudo -u gardener env GARDENER_CONFIG=/etc/gardener/config.json npm run redo    -- 5 --note "Say what the burns did."
 ```
 
 The next hourly round carries the decision out. An approved draft is stored on Walrus; a
 rejected one goes out as the figures alone. The note is kept as a memory that shapes how
 later reports are written (the prompt tells the model to ignore a note that contradicts the
 facts). Type notes yourself; never paste text a player wrote.
+
+`redo` is for a draft you do not want to publish but do not want reduced to figures either: it drops
+the waiting draft, and the next round collects the epoch again and asks the model again, so the
+observations come from the new text. Its note goes to the model for that one draft and is not
+kept as a memory (approve the new draft with `--note` if you want it kept). Only a draft that is
+still waiting can be redone, not one already approved or rejected. Each redo costs one more model
+call (and two if the checks fail the first time), counted against the limits of 4 a day and 16 a
+month; when they are used up the round says so and waits, keeping the note, until the limit
+allows it.
 
 **Topping up.** The gardener stops, and says so, when its address holds under 0.1 SUI or
 too little WAL for one more save (about 0.54 WAL for the longest storage Walrus sells).

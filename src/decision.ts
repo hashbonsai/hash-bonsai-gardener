@@ -1,11 +1,12 @@
-import { applyDecision, type StateStore } from './state'
+import { applyDecision, applyRedo, type StateStore } from './state'
 
 /**
- * `npm run approve -- <epoch> [--note "..."]` and `npm run reject -- <epoch> [--note "..."]`:
- * the operator's decision on the draft that is waiting. The next hourly round carries it out.
- * The note is typed by the operator on the server, never taken from a player; it becomes a
- * memory that shapes how later reports are written, and the prompt tells the model to ignore
- * a note that disagrees with the facts.
+ * `npm run approve -- <epoch> [--note "..."]`, `npm run reject -- <epoch> [--note "..."]` and
+ * `npm run redo -- <epoch> [--note "..."]`: the operator's decision on the draft that is waiting.
+ * The next hourly round carries it out. The note is typed by the operator on the server, never
+ * taken from a player. With approve or reject it becomes a memory that shapes how later reports
+ * are written; with redo it goes to the model for the draft that replaces this one, and is not
+ * kept as a memory. The prompt tells the model to ignore a note that disagrees with the facts.
  */
 
 /** The epoch and the note out of the command line (anything after the program's own flags). */
@@ -31,8 +32,12 @@ export function parseDecisionArgs(argv: string[]): { epoch: number; note: string
   return { epoch: Number(rest[0]), note }
 }
 
-export function decide(argv: string[], status: 'approved' | 'rejected', store: StateStore): string {
+export function decide(argv: string[], status: 'approved' | 'rejected' | 'redo', store: StateStore): string {
   const { epoch, note } = parseDecisionArgs(argv)
+  if (status === 'redo') {
+    store.save(applyRedo(store.load(), epoch, note))
+    return `Epoch ${epoch}'s draft is dropped and the next hourly round writes it again${note ? ', with your note' : ''}. The model-call limits still count the calls already made (4 a day, 16 a month).`
+  }
   store.save(applyDecision(store.load(), epoch, status, note))
   const what = status === 'approved' ? 'approved' : 'rejected (it will go out as the figures alone)'
   return `Epoch ${epoch}'s draft is ${what}${note ? ', with your note' : ''}. The next hourly round carries it out.`

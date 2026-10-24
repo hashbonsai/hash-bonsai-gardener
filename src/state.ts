@@ -52,6 +52,8 @@ export type State = {
   /** The Walrus blob id of the last report, which the next one links back to. */
   previousBlobId: string | null
   pending: Pending | null
+  /** The note from `redo`, handed to the model when the next round writes that epoch again; cleared once the new draft is made. */
+  redoNote: EditorNote | null
   /** When each language-model call was made, for the daily and monthly limits. */
   llmCallsMs: number[]
   /** When this gardener first saw an epoch final, keyed by epoch, for the six-hour notices. */
@@ -73,6 +75,7 @@ export function initialState(lastReportedEpoch: number): State {
     lastReportedEpoch,
     previousBlobId: null,
     pending: null,
+    redoNote: null,
     llmCallsMs: [],
     firstSeenFinalMs: {},
     notifiedMs: {},
@@ -96,6 +99,8 @@ export function assertState(value: unknown): asserts value is State {
   if (value.schema !== STATE_SCHEMA) bad('schema')
   if (!Number.isInteger(value.lastReportedEpoch)) bad('lastReportedEpoch')
   if (value.previousBlobId !== null && typeof value.previousBlobId !== 'string') bad('previousBlobId')
+  const redo = value.redoNote
+  if (redo !== null && !(isRecord(redo) && Number.isInteger(redo.epoch) && typeof redo.note === 'string')) bad('redoNote')
   if (!numberList(value.llmCallsMs)) bad('llmCallsMs')
   if (!isRecord(value.firstSeenFinalMs)) bad('firstSeenFinalMs')
   if (!isRecord(value.notifiedMs)) bad('notifiedMs')
@@ -129,6 +134,8 @@ export function fileStateStore(path: string, initial: () => State): StateStore {
       } catch {
         throw new Error('the state file is not valid JSON; fix or move it rather than start over, which would write an epoch twice')
       }
+      // A file written before `redoNote` existed has none: that is no note, not a damaged file.
+      if (isRecord(parsed) && parsed.redoNote === undefined) parsed.redoNote = null
       assertState(parsed)
       return parsed
     },
@@ -169,4 +176,18 @@ export function applyDecision(state: State, epoch: number, status: 'approved' | 
   if (p.epoch !== epoch) throw new Error(`the draft waiting is for epoch ${p.epoch}, not ${epoch}`)
   if (p.status !== 'awaiting') throw new Error(`epoch ${epoch}'s draft was already ${p.status}`)
   return { ...state, pending: { ...p, status, note: note && note.trim() ? note.trim() : null } }
+}
+
+/**
+ * Drops the waiting draft so the next round writes the epoch again, and keeps the operator's note
+ * for that round. Only a draft still waiting can be dropped: one that is approved or rejected is
+ * already on its way out. Nothing was remembered or stored for a waiting draft, and the model
+ * calls it cost stay counted, so the daily and monthly limits still apply to the new one.
+ */
+export function applyRedo(state: State, epoch: number, note: string | null): State {
+  const p = state.pending
+  if (!p) throw new Error('there is no draft waiting for a decision')
+  if (p.epoch !== epoch) throw new Error(`the draft waiting is for epoch ${p.epoch}, not ${epoch}`)
+  if (p.status !== 'awaiting') throw new Error(`epoch ${epoch}'s draft was already ${p.status}; only a draft still waiting can be written again`)
+  return { ...state, pending: null, redoNote: note && note.trim() ? { epoch, note: note.trim() } : null }
 }

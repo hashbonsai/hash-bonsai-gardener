@@ -74,7 +74,7 @@ export async function runRound(deps: RoundDeps): Promise<RoundOutcome> {
     if (state.pending) {
       const p = state.pending
       if (p.status === 'awaiting') {
-        await say(`awaiting-${p.epoch}`, `Epoch ${p.epoch}'s draft is waiting for a decision: npm run approve -- ${p.epoch}  or  npm run reject -- ${p.epoch}`)
+        await say(`awaiting-${p.epoch}`, `Epoch ${p.epoch}'s draft is waiting for a decision: npm run approve -- ${p.epoch}, npm run reject -- ${p.epoch}  or  npm run redo -- ${p.epoch}`)
         persist()
         return { kind: 'awaiting-approval', epoch: p.epoch }
       }
@@ -131,11 +131,13 @@ export async function runRound(deps: RoundDeps): Promise<RoundOutcome> {
 
     // The words.
     const llm = budgetedProvider(deps.llm, state, deps.nowMs, deps.limits)
+    // The note given to `redo` is for the draft that replaces the one dropped, and for that epoch only.
+    const redoNote = state.redoNote && state.redoNote.epoch === epoch ? state.redoNote : null
     const written = await composeReport(llm, {
       facts,
       followups,
       observations: recalled.observations,
-      notes: recalled.notes,
+      notes: redoNote ? [redoNote, ...recalled.notes] : recalled.notes,
       previousReports,
       systemPrompt: deps.systemPrompt,
       reportUrl: deps.store.url(PLACEHOLDER_BLOB_ID),
@@ -175,6 +177,7 @@ export async function runRound(deps: RoundDeps): Promise<RoundOutcome> {
       memoryWritten: null,
     }
     state.pending = pending
+    state.redoNote = null
     persist()
 
     if (pending.status === 'awaiting') {
@@ -307,7 +310,7 @@ function draftMessage(epoch: number, draft: Draft, url: string, awaiting: boolea
     '',
     '— Farcaster cast (by hand for now) —',
     `${draft.cast}${castSuffix(url)}`,
-    ...(awaiting ? ['', `Approve:  npm run approve -- ${epoch} [--note "how to write next time"]`, `Reject:   npm run reject -- ${epoch} [--note "why"]`] : []),
+    ...(awaiting ? ['', `Approve:  npm run approve -- ${epoch} [--note "how to write next time"]`, `Reject:   npm run reject -- ${epoch} [--note "why"]`, `Redo:     npm run redo -- ${epoch} [--note "how to write it this time"]  (drops this draft; the next round writes it again)`] : []),
   ].join('\n')
 }
 

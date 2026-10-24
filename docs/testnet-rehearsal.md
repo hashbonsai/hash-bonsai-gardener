@@ -99,9 +99,10 @@ Watch for each of these, in any order they come.
 |---|---|---|
 | An epoch not over | just run | `round: waiting (epoch N)` and nothing else |
 | Distribution not confirmed | let an epoch end without the house bot's `advance` | `waiting`, and no report. (The six-hour notice counts from the epoch's settling, which a rehearsal of ten-minute epochs cannot wait out; that rule is covered by the unit tests.) |
-| A draft | an epoch is over and confirmed | a draft in the notices, with `npm run approve` and `npm run reject` lines; nothing on Walrus yet |
+| A draft | an epoch is over and confirmed | a draft in the notices, with `npm run approve`, `npm run reject` and `npm run redo` lines; nothing on Walrus yet |
 | Approval | `npm run approve -- N --note "Be brief."` then a round | `Epoch N report published`, a blob link that opens in a browser, `not deletable`; the note appears among the memories written |
 | Rejection | `npm run reject -- N --note "Too cheerful."` then a round | a report with the figures alone, "withheld by the operator" |
+| Writing again | `npm run redo -- N --note "Mention the burns."` then a round | the old draft is gone, a new draft arrives with the `redo` line again, and the model's request carries the note; nothing is stored or remembered until the new draft is approved. With `llmLimits` at `{ "perDay": 1, "perMonth": 1 }`, the round after a redo says the model was called too often and waits |
 | The chain of reports | publish two in a row | the second blob's `previousBlobId` is the first's id, and its prompt includes the first's commentary |
 | Memory | publish two in a row | the second draft's notebook has a line for the first's observation; the namespace's memory count grows (the published notice shows it) |
 | No commentary | set `"model": "no-such-model"` for one round | a figures-only draft, "the commentary could not be written", and a notice with the model's own message |
