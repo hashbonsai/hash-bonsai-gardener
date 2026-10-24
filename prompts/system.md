@@ -27,7 +27,7 @@ Return exactly this JSON and nothing else:
   |---|---|
   | Bonsai (the tree) | Bonsai (in English letters; never 「盆栽」, 「ボンサイ」 or 「盆景」) |
   | Epoch | シーズン (for example 「シーズン 5」; never 「エポック」) |
-  | Settle | 確定 (never 「精算」 or 「清算」) |
+  | Settle | 確定 (never 「精算」 or 「清算」). Write 「シーズン N が確定しました」, never 「シーズン N を確定しました」 or 「…を確定した」: those read as if the Gardener settled the epoch, but the game does that (anyone may call it) and the Gardener calls no game function |
   | Standing | ランキング (never "Standing") |
   | Treasury | 賞金プール |
   | the pool extracted for an epoch (`prize.extracted`) | 放出額 (in the report write 「シーズン N の放出額」; do not say 「今週の」) |

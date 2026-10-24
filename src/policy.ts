@@ -86,6 +86,19 @@ export function pruneReleasedSentenceIn(text: string): string | null {
 }
 
 /**
+ * 「シーズン N を確定しました」 reads as if the Gardener settled the epoch. The game's settle function
+ * does that, anyone may call it, and the Gardener calls no game function; the report says the
+ * epoch 「が確定しました」 instead. These are the two spellings that make the Gardener the actor.
+ */
+export const SETTLED_BY_GARDENER_JA = ['を確定しました', 'を確定した'] as const
+
+/** The first phrase in the Japanese text that reads as the Gardener having settled something, or null. */
+export function settledByGardenerIn(text: string): string | null {
+  for (const w of SETTLED_BY_GARDENER_JA) if (text.includes(w)) return w
+  return null
+}
+
+/**
  * The first Japanese spelling the glossary rules out, or null. Used on text
  * that is not itself Japanese copy (an observation's sentence), where an
  * English word like "Standing" is fine but a banned Japanese spelling is not.

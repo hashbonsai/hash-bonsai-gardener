@@ -1,6 +1,6 @@
 import { displayFacts } from './display'
 import { allowedNumbers, disallowedNumbers } from './numbers'
-import { forbiddenTermJaIn, forbiddenWordIn, LIMITS, numberWordIn, pruneReleasedSentenceIn, ruledOutJapaneseSpellingIn, voteWordIn } from './policy'
+import { forbiddenTermJaIn, forbiddenWordIn, LIMITS, numberWordIn, pruneReleasedSentenceIn, ruledOutJapaneseSpellingIn, settledByGardenerIn, voteWordIn } from './policy'
 import { OBSERVATION_METRICS, type Direction, type Facts, type LlmReport, type Observation, type ObservationMetric, type RawObservation } from './types'
 import { metricValue } from './learn'
 
@@ -91,6 +91,8 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     if (written) reasons.push(`${name}: number written as a word ("${written}"); write every number in digits`)
     const term = name === 'ja' ? forbiddenTermJaIn(text) : null
     if (term) reasons.push(`ja: house style does not allow "${term}" (use the game's Japanese term from the glossary in the instructions)`)
+    const settled = name === 'ja' ? settledByGardenerIn(text) : null
+    if (settled) reasons.push(`ja: 「${settled}」 reads as if the Gardener settled the epoch, but the game does and the Gardener calls no game function — write 「シーズン N が確定しました」`)
     const released = name === 'ja' ? pruneReleasedSentenceIn(text) : null
     if (released) reasons.push(`ja: 「放出」 is the SUI prize's word (放出額); a PRUNE handout is 「配布」 — in the sentence "${released.slice(0, 60)}"`)
     for (const n of disallowedNumbers(text, allowed)) reasons.push(`${name}: number "${n.text}" is not in the facts`)

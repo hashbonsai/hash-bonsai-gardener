@@ -27,6 +27,13 @@ describe('the system prompt', () => {
     expect(prompt).toContain('Say nothing about how much is left or about what PRUNE is worth.')
   })
 
+  it('says the epoch 「が確定しました」, and never that anyone 「を確定しました」 it, in the glossary’s Settle row', () => {
+    const row = prompt.split('\n').find((l) => l.includes('| Settle |')) ?? ''
+    expect(row).toContain('「シーズン N が確定しました」')
+    expect(row).toContain('never 「シーズン N を確定しました」 or 「…を確定した」')
+    expect(row).toContain('the Gardener calls no game function')
+  })
+
   it('names the Japanese term to use where the check refuses a spelling', () => {
     for (const term of ['盆栽', 'エポック', '精算', 'バーン']) expect(prompt).toContain(term)
     expect(prompt).toContain('ランキング')

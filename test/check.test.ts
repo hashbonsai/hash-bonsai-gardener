@@ -117,6 +117,18 @@ describe('checkReport', () => {
       const ja = 'シーズン 5 は、確定後の賞金プールが 310.75 SUI で、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。庭師の記録です。'
       expect(checkReport(report({ ja }), ctx).ok).toBe(true)
     })
+    it.each(['を確定しました', 'を確定した'])('rejects 「%s」 in the Japanese text: it reads as if the Gardener settled the epoch', (phrase) => {
+      const got = reasons(checkReport(report({ ja: `シーズン 5 ${phrase}。参加者は 12 人でした。` }), ctx)).join()
+      expect(got).toContain(`「${phrase}」 reads as if the Gardener settled the epoch`)
+      expect(got).toContain('シーズン N が確定しました')
+    })
+    it('accepts the epoch being settled with 「が確定しました」, and 「確定後」', () => {
+      expect(checkReport(report({ ja: 'シーズン 5 が確定しました。参加者は 12 人でした。' }), ctx).ok).toBe(true)
+      expect(checkReport(report({ ja: 'シーズン 5 は確定後の賞金プールが 310.75 SUI でした。' }), ctx).ok).toBe(true)
+    })
+    it('applies to the Japanese text only', () => {
+      expect(checkReport(report({ en: 'Epoch 5 was settled.', cast: 'Epoch 5 settled.' }), ctx).ok).toBe(true)
+    })
     it('lets the English text and the cast use Standing, Arena and Gardener', () => {
       const r = checkReport(report({ en: 'Epoch 5: the Standing held 12 players and the Arena stayed busy.', cast: 'The Gardener on epoch 5.' }), ctx)
       expect(r.ok).toBe(true)

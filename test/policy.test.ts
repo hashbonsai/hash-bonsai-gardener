@@ -11,6 +11,8 @@ import {
   numberWordIn,
   pruneReleasedSentenceIn,
   ruledOutJapaneseSpellingIn,
+  SETTLED_BY_GARDENER_JA,
+  settledByGardenerIn,
   VOTE_WORDS,
   voteWordIn,
 } from '../src/policy'
@@ -52,6 +54,14 @@ describe('policy', () => {
     expect(forbiddenTermJaIn('Arena の木')).toBe('Arena')
     expect(forbiddenTermJaIn('Gardener の記録')).toBe('Gardener')
     expect(forbiddenTermJaIn('シーズン 5 の Bonsai、ランキング、アリーナ、庭師、スコアに変換')).toBeNull()
+  })
+  it('pins the phrases that make the Gardener the one who settled, and finds them', () => {
+    expect([...SETTLED_BY_GARDENER_JA]).toEqual(['を確定しました', 'を確定した'])
+    expect(settledByGardenerIn('シーズン 3 を確定しました。')).toBe('を確定しました')
+    expect(settledByGardenerIn('シーズン 3 の結果を確定した。')).toBe('を確定した')
+    expect(settledByGardenerIn('シーズン 3 が確定しました。')).toBeNull()
+    expect(settledByGardenerIn('確定後の賞金プール')).toBeNull()
+    expect(settledByGardenerIn('シーズン 3 は確定した。')).toBeNull()
   })
   it('lets an English sentence use the English words, and still catches a Japanese spelling in it', () => {
     expect(ruledOutJapaneseSpellingIn('The Standing may keep filling in the Arena, says the Gardener.')).toBeNull()
