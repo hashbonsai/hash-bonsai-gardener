@@ -116,6 +116,7 @@ next to `dist/`. See [deploy/README.md](deploy/README.md) for the server, the ti
 | `npm run approve -- <epoch> [--note "…"]` | approve the waiting draft |
 | `npm run reject -- <epoch> [--note "…"]` | publish it as figures alone |
 | `npm run backfill -- --config <file> [--namespace <ns>] [--dry-run]` | remember the epochs before the first report |
+| `npx tsx scripts/compare-memory.ts --config <file> --epoch <n>` | one finished epoch written twice, with and without memory, side by side (stores nothing) |
 
 Set `GARDENER_CONFIG` instead of repeating `--config`.
 

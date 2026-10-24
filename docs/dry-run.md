@@ -97,6 +97,17 @@ npm run once -- --config ~/.config/the-gardener/config.json --dry-run --no-memor
 what the gardener remembers of its earlier observations (in the notebook lines and in
 what the model is told); the second is the same epoch without any of it.
 
+To see the two side by side from one command, write a finished epoch twice, with and
+without what the gardener remembers (it stores nothing, and calls the model twice):
+
+```
+npx tsx scripts/compare-memory.ts --config ~/.config/the-gardener/config.json --epoch 6
+```
+
+It says how many earlier observations it recalled and how many were graded against that
+epoch. It only has something to show once the memory holds an observation from an earlier
+epoch.
+
 ## Where the draft goes
 
 A dry run prints the draft to the terminal unless the configuration names a
