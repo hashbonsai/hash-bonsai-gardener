@@ -57,6 +57,21 @@ describe('the system prompt', () => {
       expect(voice).toContain('Never use an image in place of a game term or a figure')
       expect(prompt).not.toContain('metaphor is welcome')
     })
+    it('leaves the figures to the table: at most 4 from the facts per language, the look back and the epoch number not counted', () => {
+      expect(prompt).toContain('does not need to repeat them')
+      expect(voice).toContain('do not read the figures out')
+      expect(voice).toContain('Use at most 4 figures from `facts` in each language')
+      expect(voice).toContain('The figures of the look back below do not count toward the 4, nor does an epoch\'s number')
+      expect(prompt).toContain('no more than 4 numbers from `facts` in each language')
+    })
+    it('never writes a wallet address, not even a short one', () => {
+      expect(voice).toContain('A wallet address is never written in the commentary')
+      expect(prompt).toContain('Never write a wallet address (anything that starts with 0x)')
+      expect(prompt).not.toContain('Mention a player only through the short address')
+    })
+    it('counts the PRUNE sentence’s amounts among the 4', () => {
+      expect(prompt).toContain('The amounts in that sentence count toward the 4 figures of rule 1.')
+    })
     it('lists what not to write', () => {
       for (const line of [
         'Do not state a cause or a reason that the facts do not give',

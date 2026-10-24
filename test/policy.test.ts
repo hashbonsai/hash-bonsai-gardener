@@ -38,7 +38,7 @@ describe('policy', () => {
     expect([...FORBIDDEN_TERMS_JA]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', '清算', 'Standing', 'Arena', 'Gardener'])
   })
   it('pins the limits', () => {
-    expect(LIMITS).toEqual({ commentaryChars: 600, commentaryWordsEn: 120, castBytes: 320, observations: { min: 0, max: 3 } })
+    expect(LIMITS).toEqual({ commentaryChars: 600, commentaryWordsEn: 120, castBytes: 320, observations: { min: 0, max: 3 }, factFigures: 4 })
   })
 
   it('finds a forbidden word as a part of a longer word, in any case', () => {

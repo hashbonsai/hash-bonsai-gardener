@@ -7,10 +7,10 @@ import { sampleFacts } from './fixtures'
 describe('the closing sentence', () => {
   it('is exactly the agreed text, in both languages and the short form', () => {
     expect(GARDENER_LONG.en).toBe(
-      "The Gardener is an AI run by the Hash Bonsai operator. It holds no permissions over Hash Bonsai's contracts: it calls no game or governance function, holds no PRUNE and does not vote.",
+      "The Gardener is an AI run by the Hash Bonsai operator. It holds no permissions over the game's contracts: it calls no game or governance function, holds no PRUNE and does not vote.",
     )
     expect(GARDENER_LONG.ja).toBe(
-      '庭師は Hash Bonsai の運営が動かす AI です。Hash Bonsai のコントラクトに対する権限は無く、ゲームと投票の関数を呼ばず、PRUNE を持たず、投票もしません。',
+      '庭師は Hash Bonsai の運営が動かす AI です。コントラクトに対する権限は無く、ゲームと投票の関数を呼ばず、PRUNE を持たず、投票もしません。',
     )
     expect(GARDENER_SHORT_EN).toBe('The Gardener is an AI run by the Hash Bonsai operator, with no permissions over its contracts.')
   })

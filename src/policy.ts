@@ -57,6 +57,8 @@ export const LIMITS = {
   /** A normal Farcaster cast, in bytes, before the fixed suffix is taken off. */
   castBytes: 320,
   observations: { min: 0, max: 3 },
+  /** Figures of the facts that the English commentary, and the Japanese, may each use; the table has the rest. */
+  factFigures: 4,
 } as const
 
 export function forbiddenWordIn(text: string): string | null {

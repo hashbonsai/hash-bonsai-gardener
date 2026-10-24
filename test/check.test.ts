@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { acceptObservations, checkReport, shortAddress } from '../src/check'
-import { allowedNumbers, disallowedNumbers, extractNumbers } from '../src/numbers'
+import { displayFacts } from '../src/display'
+import { allowedNumbers, disallowedNumbers, extractNumbers, factFiguresIn } from '../src/numbers'
 import { CLEAN_REPORT, sampleFacts } from './fixtures'
 
 const facts = sampleFacts()
@@ -11,6 +12,17 @@ const report = (over: Partial<typeof CLEAN_REPORT> = {}) => ({ ...CLEAN_REPORT, 
 function reasons(r: ReturnType<typeof checkReport>): string[] {
   return r.ok ? [] : r.reasons
 }
+
+describe('factFiguresIn', () => {
+  const shown = displayFacts(facts)
+  it('lists each fact’s figure once, in order, and gives where each starts', () => {
+    const got = factFiguresIn('12 players, 40 burns, 12 again', shown, [])
+    expect(got.map((n) => [n.value, n.index])).toEqual([[12, 0], [40, 12]])
+  })
+  it('leaves out an epoch’s number, the follow-up numbers, and what is no fact', () => {
+    expect(factFiguresIn('Epoch 5 and シーズン 4: 9 to 12, rank 3, 70 trees', shown, [9, 12]).map((n) => n.value)).toEqual([70])
+  })
+})
 
 describe('extractNumbers', () => {
   it('reads integers, commas, decimals, percent signs and magnitude suffixes', () => {
@@ -100,9 +112,61 @@ describe('checkReport', () => {
     expect(reasons(checkReport(report({ cast: 'あ'.repeat(70) }), { ...ctx, castBudgetBytes: 200 })).join()).toMatch(/cast: 210 bytes/)
   })
 
-  it('rejects an address that is not one of the top three, and accepts one that is', () => {
-    expect(reasons(checkReport(report({ en: 'Epoch 5: 0xdeadbeef…1234 led.' }), ctx)).join()).toMatch(/not one of the top three/)
-    expect(checkReport(report({ en: 'Epoch 5: 0xabc123…cdef led.' }), ctx).ok).toBe(true)
+  it('rejects an address that is not one of the top three in the cast, and accepts one that is', () => {
+    expect(reasons(checkReport(report({ cast: 'Epoch 5: 0xdeadbeef…1234 led.' }), ctx)).join()).toMatch(/cast: address .* is not one of the top three/)
+    expect(checkReport(report({ cast: 'Epoch 5: 0xabc123…cdef led.' }), ctx).ok).toBe(true)
+  })
+
+  describe('the commentary names no wallet, and uses few of the facts’ figures', () => {
+    it.each(['0xabc123…cdef', '0xdeadbeef…1234', '0xabc123'])('rejects the address %s in the English commentary and in the Japanese', (address) => {
+      const en = reasons(checkReport(report({ en: `Epoch 5: ${address} led the Standing.` }), ctx)).join()
+      expect(en).toContain(`en: the address ${address} is not written in the commentary`)
+      const ja = reasons(checkReport(report({ ja: `シーズン 5 は ${address} が先頭でした。` }), ctx)).join()
+      expect(ja).toContain('ja: the address')
+    })
+    it('lets the cast keep a top-three address', () => {
+      expect(checkReport(report({ cast: 'Epoch 5: 0xabc123…cdef was close.' }), ctx).ok).toBe(true)
+    })
+
+    const four = (n: string) => `Epoch 5: ${n}`
+    it('accepts four figures of the facts, and refuses five, in the English commentary', () => {
+      expect(checkReport(report({ en: four('12 players, 40 burns, 22 drains and 70 trees.') }), ctx).ok).toBe(true)
+      const got = reasons(checkReport(report({ en: four('12 players, 40 burns, 22 drains, 70 trees and 18 seeded.') }), ctx)).join()
+      expect(got).toContain('en: 5 figures from the facts (12, 40, 22, 70, 18) but at most 4 are allowed')
+    })
+    it('accepts four figures of the facts, and refuses five, in the Japanese commentary', () => {
+      expect(checkReport(report({ ja: 'シーズン 5 は参加者 12 人、スコアに変換した回数 40 回、ドレイン 22 回、アリーナの Bonsai 70 でした。' }), ctx).ok).toBe(true)
+      const got = reasons(checkReport(report({ ja: 'シーズン 5 は参加者 12 人、スコアに変換した回数 40 回、ドレイン 22 回、アリーナの Bonsai 70、うち 18 でした。' }), ctx)).join()
+      expect(got).toContain('ja: 5 figures from the facts')
+    })
+    it('counts each language on its own', () => {
+      const en = four('12 players, 40 burns, 22 drains and 70 trees.')
+      const ja = 'シーズン 5 は参加者 12 人、スコアに変換した回数 40 回、ドレイン 22 回、アリーナの Bonsai 70 でした。'
+      expect(checkReport(report({ en, ja }), ctx).ok).toBe(true)
+    })
+    it('counts a value once, however many times it is written', () => {
+      expect(checkReport(report({ en: four('12 players, then 12 again, 40 burns, 22 drains, 70 trees, 12.') }), ctx).ok).toBe(true)
+    })
+    it('does not count the epoch’s number, wherever it follows "epoch" or 「シーズン」', () => {
+      const en = 'In epoch 5 and epoch 4, 12 players, 40 burns, 22 drains and 70 trees.'
+      expect(checkReport(report({ en }), ctx).ok).toBe(true)
+      const ja = 'シーズン 4 とシーズン 5 は、参加者 12 人、スコアに変換した回数 40 回、ドレイン 22 回、アリーナの Bonsai 70 でした。'
+      expect(checkReport(report({ ja }), ctx).ok).toBe(true)
+    })
+    it('does not count the numbers of the look back: the before and after of a follow-up, and its epochs', () => {
+      const withLookBack = { ...ctx, derived: [9, 12, 4, 5] }
+      const en = 'Last epoch I expected more players. It went from 9 to 12, as I thought. 40 burns, 22 drains, 70 trees and 18 seeded.'
+      expect(checkReport(report({ en }), withLookBack).ok).toBe(true)
+      // Without the follow-up, 9 is no fact (and 12 would be a fifth figure): the same text is refused.
+      expect(checkReport(report({ en }), ctx).ok).toBe(false)
+    })
+    it('does not count a number that is not one of the facts, such as a rank; the number check is what judges it', () => {
+      const en = 'Epoch 5: the top 3 held 12 players, 40 burns, 22 drains and 70 trees.'
+      expect(checkReport(report({ en }), ctx).ok).toBe(true)
+    })
+    it('leaves the cast out of the count', () => {
+      expect(checkReport(report({ cast: 'Epoch 5: 12 players, 40 burns, 22 drains, 70 trees, 18 seeded.' }), { ...ctx, castBudgetBytes: 400 }).ok).toBe(true)
+    })
   })
 
   describe('house style', () => {

@@ -11,8 +11,8 @@ import type { Facts, Followup, Lang, ObservationMetric, Verdict } from './types'
 // ── The closing sentence (fixed; changing it means changing its test too) ────
 
 export const GARDENER_LONG: Record<Lang, string> = {
-  en: "The Gardener is an AI run by the Hash Bonsai operator. It holds no permissions over Hash Bonsai's contracts: it calls no game or governance function, holds no PRUNE and does not vote.",
-  ja: '庭師は Hash Bonsai の運営が動かす AI です。Hash Bonsai のコントラクトに対する権限は無く、ゲームと投票の関数を呼ばず、PRUNE を持たず、投票もしません。',
+  en: "The Gardener is an AI run by the Hash Bonsai operator. It holds no permissions over the game's contracts: it calls no game or governance function, holds no PRUNE and does not vote.",
+  ja: '庭師は Hash Bonsai の運営が動かす AI です。コントラクトに対する権限は無く、ゲームと投票の関数を呼ばず、PRUNE を持たず、投票もしません。',
 }
 
 export const GARDENER_SHORT_EN = 'The Gardener is an AI run by the Hash Bonsai operator, with no permissions over its contracts.'

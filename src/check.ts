@@ -1,5 +1,5 @@
 import { displayFacts } from './display'
-import { allowedNumbers, disallowedNumbers } from './numbers'
+import { allowedNumbers, disallowedNumbers, factFiguresIn } from './numbers'
 import {
   forbiddenTermJaIn,
   forbiddenWordIn,
@@ -81,7 +81,8 @@ export function acceptObservations(raw: RawObservation[], facts: Facts, allowed:
 export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
   const reasons: string[] = []
   // What the model was shown is the rounded figures, so those are what it may quote.
-  const allowed = allowedNumbers(displayFacts(ctx.facts), ctx.derived)
+  const shown = displayFacts(ctx.facts)
+  const allowed = allowedNumbers(shown, ctx.derived)
   const shortOk = new Set((ctx.facts.top ?? []).map((t) => t.address.toLowerCase()))
 
   const texts: [string, string][] = [
@@ -111,7 +112,18 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     const released = name === 'ja' ? pruneReleasedSentenceIn(text) : null
     if (released) reasons.push(`ja: 「放出」 is the SUI prize's word (放出額); a PRUNE handout is 「配布」 — in the sentence "${released.slice(0, 60)}"`)
     for (const n of disallowedNumbers(text, allowed)) reasons.push(`${name}: number "${n.text}" is not in the facts`)
-    for (const a of badAddresses(text, shortOk)) reasons.push(`${name}: address ${a} is not one of the top three`)
+    if (name === 'cast') {
+      for (const a of badAddresses(text, shortOk)) reasons.push(`${name}: address ${a} is not one of the top three`)
+    } else {
+      // The table that goes with the report has the top scores; the commentary names no wallet.
+      for (const a of text.matchAll(ADDRESS)) reasons.push(`${name}: the address ${a[0]} is not written in the commentary`)
+      const figures = factFiguresIn(text, shown, ctx.derived ?? [])
+      if (figures.length > LIMITS.factFigures) {
+        reasons.push(
+          `${name}: ${figures.length} figures from the facts (${figures.map((f) => f.text).join(', ')}) but at most ${LIMITS.factFigures} are allowed; the table has them all, so keep the ones that best show how active the epoch was`,
+        )
+      }
+    }
   }
 
   if (typeof report.en === 'string') {

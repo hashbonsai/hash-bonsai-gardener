@@ -6,6 +6,8 @@ export type FoundNumber = {
   value: number
   /** The size of the last place it is written to: 10^-decimals × the suffix multiplier. */
   tolerance: number
+  /** Where it starts in the text. */
+  index: number
 }
 
 const SUFFIX: Record<string, number> = { k: 1e3, K: 1e3, m: 1e6, M: 1e6, b: 1e9, B: 1e9, 万: 1e4, 億: 1e8 }
@@ -25,6 +27,7 @@ export function extractNumbers(text: string): FoundNumber[] {
       text: m[0].trim(),
       value: Number(mantissa) * mult,
       tolerance: Math.pow(10, -decimals) * mult,
+      index: m.index,
     })
   }
   return out
@@ -59,6 +62,31 @@ export function allowedNumbers(facts: Facts, derived: number[] = []): number[] {
  */
 export function isAllowed(found: FoundNumber, allowed: number[]): boolean {
   return allowed.some((a) => Math.abs(found.value - a) <= found.tolerance / 2 + 1e-9)
+}
+
+/** A number right after one of these is an epoch's number, not a figure of the facts. */
+const EPOCH_LABEL = /(?:epochs?|シーズン)\s*$/i
+
+/**
+ * The figures `text` takes from the facts, each value once: the table that goes with every report
+ * already has all of them, so the commentary is allowed only a few. Not counted: an epoch's number
+ * (a number right after "epoch" or 「シーズン」), and the numbers of the follow-ups (`derived`: the
+ * before and after of a look back, and the epochs it spans). A number that is not a fact at all
+ * (a rank, say) is not counted either; the number check deals with that.
+ */
+export function factFiguresIn(text: string, facts: Facts, derived: number[]): FoundNumber[] {
+  const fromFacts: number[] = []
+  leaves(facts, fromFacts)
+  const seen = new Set<number>()
+  const out: FoundNumber[] = []
+  for (const n of extractNumbers(text)) {
+    if (EPOCH_LABEL.test(text.slice(0, n.index))) continue
+    if (isAllowed(n, derived) || !isAllowed(n, fromFacts)) continue
+    if (seen.has(n.value)) continue
+    seen.add(n.value)
+    out.push(n)
+  }
+  return out
 }
 
 export function disallowedNumbers(text: string, allowed: number[]): FoundNumber[] {
