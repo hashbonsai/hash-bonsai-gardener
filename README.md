@@ -86,7 +86,8 @@ like a key is refused. The relay's `analyze` is never used.
 | | |
 |---|---|
 | **Numbers** | The report may use only numbers that appear in the facts it was shown, rounded the way the game's screens round (`src/display.ts`). A number must match a fact to the last place it is written to. A number written as a word is refused too, since the check could not see it. |
-| **Words** | No price, profit, yield or market talk (English and Japanese). Nothing about voting: the ballot's announcements are fixed text. The Japanese must use the game's own terms (`prompts/system.md`). |
+| **Words** | No price, profit, yield or market talk (English and Japanese). Nothing about voting: the ballot's announcements are fixed text. The Japanese must use the game's own terms (`prompts/system.md`), and may not say the Gardener settled an epoch (the game does that), nor use 「庭師」, 「剪定」 or 「刈り取」, which read as a name for the AI or as the token. No "$PRUNE" in any language. |
+| **Voice** | The commentary is written in the first person by a quiet writer who looks back at one earlier observation when there is one, and says plainly when it was wrong. It states no cause the facts do not give, advises no player, and uses at most one garden image, in the last sentence. The wording is in `prompts/system.md`; the checks above are what is enforced. |
 | **Addresses** | Only the short addresses of the top three, as given. |
 | **The closing sentence** | "The Gardener is an AI run by the Hash Bonsai operator…" is fixed text added by code, not written by the model. |
 | **What the key can sign** | `src/chain.ts` wraps the key. It signs a transaction only if it is sent by the gardener, paid by the gardener, and made of Walrus calls, three framework calls, coin splits and merges, and transfers back to itself. Anything else, including a call into the game, is refused before signing. |

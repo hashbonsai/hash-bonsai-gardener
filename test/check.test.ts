@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { acceptObservations, checkReport, shortAddress } from '../src/check'
 import { allowedNumbers, disallowedNumbers, extractNumbers } from '../src/numbers'
@@ -114,13 +115,47 @@ describe('checkReport', () => {
       expect(got).toContain(`ja: house style does not allow "${term}"`)
     })
     it('accepts the glossary terms and Bonsai in English letters', () => {
-      const ja = 'シーズン 5 は、確定後の賞金プールが 310.75 SUI で、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。庭師の記録です。'
+      const ja = 'シーズン 5 は、確定後の賞金プールが 310.75 SUI で、ランキングに 12 人が入り、アリーナの Bonsai が 40 回スコアに変換されました。私の記録です。'
       expect(checkReport(report({ ja }), ctx).ok).toBe(true)
     })
     it.each(['を確定しました', 'を確定した'])('rejects 「%s」 in the Japanese text: it reads as if the Gardener settled the epoch', (phrase) => {
       const got = reasons(checkReport(report({ ja: `シーズン 5 ${phrase}。参加者は 12 人でした。` }), ctx)).join()
       expect(got).toContain(`「${phrase}」 reads as if the Gardener settled the epoch`)
       expect(got).toContain('シーズン N が確定しました')
+    })
+    it.each(['剪定', '刈り取', '刈り取り', '刈り取った', '庭師'])('rejects 「%s」 in the Japanese commentary: the voice is 「私」, and it reads as the token or a name', (word) => {
+      const got = reasons(checkReport(report({ ja: `シーズン 5 は、私が見た限り、${word}の話はありませんでした。参加者は 12 人でした。` }), ctx)).join()
+      expect(got).toContain('is not used in the commentary')
+      expect(got).toContain('speak as 「私」')
+    })
+    it('names which of the words it found', () => {
+      expect(reasons(checkReport(report({ ja: 'シーズン 5 の庭師は 12 人でした。' }), ctx)).join()).toContain('「庭師」 is not used')
+      expect(reasons(checkReport(report({ ja: 'シーズン 5 は剪定の季節でした。参加者は 12 人。' }), ctx)).join()).toContain('「剪定」 is not used')
+    })
+    it('lets the English text and the cast use the same words: the ban is on the Japanese commentary', () => {
+      expect(checkReport(report({ en: 'Epoch 5: I watched the Standing like a gardener would, 12 players.', cast: 'Epoch 5, pruned and watched.' }), ctx).ok).toBe(true)
+    })
+    it.each(['$PRUNE', '$prune', '$Prune'])('rejects 「%s」 in the English text, the Japanese text and the cast', (ticker) => {
+      for (const field of ['en', 'ja', 'cast'] as const) {
+        const text = field === 'ja' ? `シーズン 5 は ${ticker} を 12 人に配布しました。` : `Epoch 5 handed ${ticker} to 12 players.`
+        const got = reasons(checkReport(report({ [field]: text }), ctx)).join()
+        expect(got).toContain(`${field}: "${ticker}" reads as a ticker; write PRUNE`)
+      }
+    })
+    it('accepts PRUNE written as the token is', () => {
+      expect(checkReport(report({ en: 'Epoch 5: 12 players shared PRUNE.', ja: 'シーズン 5 は PRUNE を参加者 12 人に配布しました。' }), ctx).ok).toBe(true)
+    })
+    it('accepts the examples of looking back that the instructions give, in both languages', () => {
+      const prompt = readFileSync(new URL('../prompts/system.md', import.meta.url), 'utf8')
+      const examples = [
+        ['Last epoch I expected more players. It went from 3 to 4, as I thought.', '先シーズン、私は参加者が増えると見ていました。3 人から 4 人へ、そのとおりになりました。'],
+        ['Last epoch I expected more players. It went from 4 to 3; I was wrong.', '先シーズン、私は参加者が増えると見ていました。4 人から 3 人へ、外れました。'],
+      ]
+      for (const [en, ja] of examples) {
+        expect(prompt).toContain(en)
+        expect(prompt).toContain(ja)
+        expect(checkReport(report({ en, ja }), { ...ctx, derived: [3, 4] }).ok).toBe(true)
+      }
     })
     it('accepts the epoch being settled with 「が確定しました」, and 「確定後」', () => {
       expect(checkReport(report({ ja: 'シーズン 5 が確定しました。参加者は 12 人でした。' }), ctx).ok).toBe(true)

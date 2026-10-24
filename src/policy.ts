@@ -86,6 +86,24 @@ export function pruneReleasedSentenceIn(text: string): string | null {
 }
 
 /**
+ * Words the Japanese commentary does not use, in a different way from the glossary's: the commentary
+ * speaks as 「私」, so it has no name for the AI to write down, and the words of pruning read as the
+ * PRUNE token. Substrings, on purpose: 「刈り取」 covers 刈り取り, 刈り取った and the rest.
+ */
+export const NOT_IN_JA_COMMENTARY = ['剪定', '刈り取', '庭師'] as const
+
+/** The first of those words in `text`, or null. */
+export function notInJaCommentaryIn(text: string): string | null {
+  for (const w of NOT_IN_JA_COMMENTARY) if (text.includes(w)) return w
+  return null
+}
+
+/** "$PRUNE" is a ticker, which reads as talk of the token's price. Not written in any language, in any case. */
+export function tickerPruneIn(text: string): string | null {
+  return /\$PRUNE/i.exec(text)?.[0] ?? null
+}
+
+/**
  * 「シーズン N を確定しました」 reads as if the Gardener settled the epoch. The game's settle function
  * does that, anyone may call it, and the Gardener calls no game function; the report says the
  * epoch 「が確定しました」 instead. These are the two spellings that make the Gardener the actor.

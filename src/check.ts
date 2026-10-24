@@ -1,6 +1,17 @@
 import { displayFacts } from './display'
 import { allowedNumbers, disallowedNumbers } from './numbers'
-import { forbiddenTermJaIn, forbiddenWordIn, LIMITS, numberWordIn, pruneReleasedSentenceIn, ruledOutJapaneseSpellingIn, settledByGardenerIn, voteWordIn } from './policy'
+import {
+  forbiddenTermJaIn,
+  forbiddenWordIn,
+  LIMITS,
+  notInJaCommentaryIn,
+  numberWordIn,
+  pruneReleasedSentenceIn,
+  ruledOutJapaneseSpellingIn,
+  settledByGardenerIn,
+  tickerPruneIn,
+  voteWordIn,
+} from './policy'
 import { OBSERVATION_METRICS, type Direction, type Facts, type LlmReport, type Observation, type ObservationMetric, type RawObservation } from './types'
 import { metricValue } from './learn'
 
@@ -91,6 +102,10 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     if (written) reasons.push(`${name}: number written as a word ("${written}"); write every number in digits`)
     const term = name === 'ja' ? forbiddenTermJaIn(text) : null
     if (term) reasons.push(`ja: house style does not allow "${term}" (use the game's Japanese term from the glossary in the instructions)`)
+    const ticker = tickerPruneIn(text)
+    if (ticker) reasons.push(`${name}: "${ticker}" reads as a ticker; write PRUNE`)
+    const voice = name === 'ja' ? notInJaCommentaryIn(text) : null
+    if (voice) reasons.push(`ja: 「${voice}」 is not used in the commentary (it reads as the PRUNE token, or as a name for the AI or the players); speak as 「私」`)
     const settled = name === 'ja' ? settledByGardenerIn(text) : null
     if (settled) reasons.push(`ja: 「${settled}」 reads as if the Gardener settled the epoch, but the game does and the Gardener calls no game function — write 「シーズン N が確定しました」`)
     const released = name === 'ja' ? pruneReleasedSentenceIn(text) : null

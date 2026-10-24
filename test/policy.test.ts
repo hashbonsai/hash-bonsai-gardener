@@ -8,11 +8,14 @@ import {
   forbiddenWordIn,
   JAPANESE_SPELLINGS_RULED_OUT,
   LIMITS,
+  NOT_IN_JA_COMMENTARY,
+  notInJaCommentaryIn,
   numberWordIn,
   pruneReleasedSentenceIn,
   ruledOutJapaneseSpellingIn,
   SETTLED_BY_GARDENER_JA,
   settledByGardenerIn,
+  tickerPruneIn,
   VOTE_WORDS,
   voteWordIn,
 } from '../src/policy'
@@ -54,6 +57,19 @@ describe('policy', () => {
     expect(forbiddenTermJaIn('Arena の木')).toBe('Arena')
     expect(forbiddenTermJaIn('Gardener の記録')).toBe('Gardener')
     expect(forbiddenTermJaIn('シーズン 5 の Bonsai、ランキング、アリーナ、庭師、スコアに変換')).toBeNull()
+  })
+  it('pins the words the Japanese commentary does not use, and finds them as parts of longer words', () => {
+    expect([...NOT_IN_JA_COMMENTARY]).toEqual(['剪定', '刈り取', '庭師'])
+    expect(notInJaCommentaryIn('枝の剪定')).toBe('剪定')
+    expect(notInJaCommentaryIn('刈り取りの季節')).toBe('刈り取')
+    expect(notInJaCommentaryIn('庭師の記録')).toBe('庭師')
+    expect(notInJaCommentaryIn('シーズン 5 の Bonsai、ランキング、アリーナ、私の記録、PRUNE を配布')).toBeNull()
+  })
+  it('finds "$PRUNE" in any case, and not PRUNE', () => {
+    expect(tickerPruneIn('buy $PRUNE')).toBe('$PRUNE')
+    expect(tickerPruneIn('$prune is up')).toBe('$prune')
+    expect(tickerPruneIn('PRUNE and 100 $ of it')).toBeNull()
+    expect(tickerPruneIn('5 PRUNE')).toBeNull()
   })
   it('pins the phrases that make the Gardener the one who settled, and finds them', () => {
     expect([...SETTLED_BY_GARDENER_JA]).toEqual(['を確定しました', 'を確定した'])

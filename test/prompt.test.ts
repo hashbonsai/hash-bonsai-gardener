@@ -34,6 +34,48 @@ describe('the system prompt', () => {
     expect(row).toContain('the Gardener calls no game function')
   })
 
+  describe('the Voice section', () => {
+    const voice = prompt.slice(prompt.indexOf('## Voice'), prompt.indexOf('## Rules'))
+
+    it('sits between what to write and the rules', () => {
+      expect(prompt.indexOf('## What to write')).toBeLessThan(prompt.indexOf('## Voice'))
+      expect(voice.length).toBeGreaterThan(200)
+    })
+    it('makes the writer a quiet one who speaks as "I" and 「私」, in short calm sentences', () => {
+      expect(voice).toContain('walks the garden once an epoch')
+      expect(voice).toContain('"I" in English, 「私」 in Japanese')
+      expect(voice).toContain('Short, calm sentences')
+    })
+    it('asks for one first-person sentence of looking back when there are follow-ups, with the numbers as given, and honesty about a miss', () => {
+      expect(voice).toContain('exactly one sentence')
+      expect(voice).toContain('`before` and `after` numbers')
+      expect(voice).toContain('If it did not come true, say so plainly')
+      expect(voice).toContain('With none, do not look back')
+    })
+    it('allows one garden image at most, in the last sentence, and never for a game term or a figure', () => {
+      expect(voice).toContain('once at most, and only for the impression of the last sentence')
+      expect(voice).toContain('Never use an image in place of a game term or a figure')
+      expect(prompt).not.toContain('metaphor is welcome')
+    })
+    it('lists what not to write', () => {
+      for (const line of [
+        'Do not state a cause or a reason that the facts do not give',
+        'Do not tell any player what to do',
+        'prices, profit, returns or an advantage to those who came early',
+        'Do not call a player a gardener (「庭師」), and do not use emoji',
+        'Do not write "$PRUNE"',
+        '「剪定」 or 「刈り取」',
+      ]) {
+        expect(voice).toContain(line)
+      }
+    })
+    it('takes 庭師 out of the glossary’s Gardener row: the commentary does not name itself', () => {
+      const row = prompt.split('\n').find((l) => l.includes('| Gardener |')) ?? ''
+      expect(row).toContain('you speak as 「私」')
+      expect(row).toContain('Never 「庭師」')
+    })
+  })
+
   it('names the Japanese term to use where the check refuses a spelling', () => {
     for (const term of ['盆栽', 'エポック', '精算', 'バーン']) expect(prompt).toContain(term)
     expect(prompt).toContain('ランキング')
