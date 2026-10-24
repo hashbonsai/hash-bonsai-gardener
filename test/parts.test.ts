@@ -334,11 +334,19 @@ describe('the stored report', () => {
 
 describe('the Walrus store', () => {
   const signer = {} as never
-  const walrus = (over: Partial<WalrusLike> = {}): WalrusLike & { written: { blob: Uint8Array; deletable: boolean; epochs: number }[] } => {
+  const walrus = (
+    over: Partial<WalrusLike> = {},
+  ): WalrusLike & { written: { blob: Uint8Array; deletable: boolean; epochs: number }[]; calls: string[] } => {
     const written: { blob: Uint8Array; deletable: boolean; epochs: number }[] = []
+    const calls: string[] = []
     return {
       written,
+      calls,
+      reset() {
+        calls.push('reset')
+      },
       async writeBlob(o) {
+        calls.push('writeBlob')
         written.push({ blob: o.blob, deletable: o.deletable, epochs: o.epochs })
         return { blobId: 'BLOB', blobObject: { id: '0xobj', deletable: false, storage: { end_epoch: 95 } } }
       },
@@ -365,6 +373,50 @@ describe('the Walrus store', () => {
     expect(await store.save(report(), 53)).toMatchObject({ blobId: 'BLOB', objectId: '0xobj', endEpoch: 95 })
     expect(w.written[0]).toMatchObject({ deletable: false, epochs: 53 })
     expect(JSON.parse(new TextDecoder().decode(w.written[0].blob)).epoch).toBe(5)
+  })
+
+  it('makes the client read its state again before it writes, every time it saves', async () => {
+    const w = walrus()
+    const store = walrusReportStore({ walrus: w, signer, aggregatorUrl: 'https://agg.example' })
+    await store.save(report(), 53)
+    expect(w.calls).toEqual(['reset', 'writeBlob'])
+    await store.save(report(), 53)
+    expect(w.calls).toEqual(['reset', 'writeBlob', 'reset', 'writeBlob'])
+  })
+
+  it('does not reset on the reads that only look (the epochs ahead, the cost)', async () => {
+    const w = walrus()
+    const store = walrusReportStore({ walrus: w, signer, aggregatorUrl: 'https://agg.example' })
+    await store.maxEpochs()
+    await store.estimate(30_000, 53)
+    expect(w.calls).toEqual([])
+  })
+
+  it('pays the price of the moment it saves, not the one the client read earlier in the round', async () => {
+    // A client that keeps the first price it reads, as WalrusClient does, until it is reset; the
+    // payment is exactly that price, so a dearer price at the time of the write leaves it short.
+    let price = 63_263n
+    let remembered: bigint | null = null
+    const w = walrus({
+      reset: () => {
+        remembered = null
+      },
+      async storageCost() {
+        remembered ??= price
+        return { totalCost: remembered }
+      },
+      async writeBlob() {
+        remembered ??= price
+        if (remembered < price) throw new Error('MoveAbort in reserve_space: balance::split, abort code 2')
+        return { blobId: 'BLOB', blobObject: { id: '0xobj', deletable: false, storage: { end_epoch: 95 } } }
+      },
+    })
+    const store = walrusReportStore({ walrus: w, signer, aggregatorUrl: 'https://agg.example' })
+    await store.estimate(30_000, 53)
+    price = 63_266n // the price rises while the memories are being written
+    // What the client alone would have done:
+    await expect(w.writeBlob({ blob: new Uint8Array(), deletable: false, epochs: 53, signer })).rejects.toThrow(/abort code 2/)
+    expect(await store.save(report(), 53)).toMatchObject({ blobId: 'BLOB' })
   })
 
   it('stops loudly if the stored object turns out deletable', async () => {

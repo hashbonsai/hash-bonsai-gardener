@@ -17,6 +17,8 @@ export interface WalrusLike {
   }>
   storageCost(size: number, epochs: number): Promise<{ totalCost: bigint }>
   systemState(): Promise<{ future_accounting: { length: number } }>
+  /** Forgets what the client has read (system state, prices, objects), so the next call reads it again. */
+  reset(): void
 }
 
 export type SavedReport = { blobId: string; objectId: string; endEpoch: number; bytes: number }
@@ -49,6 +51,11 @@ export function walrusReportStore(deps: { walrus: WalrusLike; signer: Signer; ag
     },
     async save(report, epochs) {
       const bytes = new TextEncoder().encode(JSON.stringify(report))
+      // The client keeps what it read for as long as it lives, and `writeBlob` pays exactly the price
+      // it read first. The price rises now and then, and a round can wait minutes (the memory writes)
+      // between that first read and the save: the payment is then short and `reserve_space` aborts
+      // inside `balance::split`. Reading the price again here builds the payment at today's price.
+      deps.walrus.reset()
       const { blobId, blobObject } = await deps.walrus.writeBlob({ blob: bytes, deletable: false, epochs, signer: deps.signer })
       // The audit record must not be deletable by anyone, the operator included. If the stored
       // object says otherwise, stop loudly; the report must not be treated as published.
