@@ -6,11 +6,12 @@
   "description": "Writes Hash Bonsai's weekly report from chain facts, stores it on Walrus as an undeletable blob, and learns across epochs with Walrus Memory.",
   "license": "MIT",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --packages=external --platform=node --format=esm --target=node20 --outfile=dist/gardener.mjs",
+    "build": "esbuild src/main.ts --bundle --packages=external --platform=node --format=esm --target=node20 --outfile=dist/gardener.mjs && esbuild src/approve.ts --bundle --packages=external --platform=node --format=esm --target=node20 --outfile=dist/approve.mjs && esbuild src/reject.ts --bundle --packages=external --platform=node --format=esm --target=node20 --outfile=dist/reject.mjs && esbuild scripts/backfill.ts --bundle --packages=external --platform=node --format=esm --target=node20 --outfile=dist/backfill.mjs",
     "once": "tsx src/main.ts",
-    "approve": "tsx src/approve.ts",
-    "reject": "tsx src/reject.ts",
-    "backfill": "tsx scripts/backfill.ts",
+    "start": "node dist/gardener.mjs",
+    "approve": "node dist/approve.mjs",
+    "reject": "node dist/reject.mjs",
+    "backfill": "node dist/backfill.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src test scripts"
