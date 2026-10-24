@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import type { LlmLimits } from './budget'
 import { MAINNET, MAINNET_GRAPHQL, type ChainConfig } from './sources'
 
 /**
@@ -28,6 +29,8 @@ export type GardenerConfig = {
   /** Hold every report for `npm run approve`; a person turns this off by editing the file. */
   requireApproval: boolean
   model: string | null
+  /** Raised model-call limits for a testnet rehearsal, whose epochs last minutes. Never set on mainnet. */
+  llmLimits: LlmLimits | null
   chain: ChainConfig
   graphqlUrl: string
 }
@@ -76,6 +79,17 @@ export function parseConfig(value: unknown): GardenerConfig {
   const chain = value.chain === undefined ? MAINNET : (value.chain as ChainConfig)
   if (network === 'testnet' && value.chain === undefined) throw new Error('config: a testnet deployment must give its own "chain" (the game objects and event packages)')
 
+  let llmLimits: LlmLimits | null = null
+  if (value.llmLimits !== undefined) {
+    // The limits are a brake against a runaway on real money. Only a rehearsal may raise them.
+    if (network === 'mainnet') throw new Error('config: "llmLimits" may only be set on a testnet deployment; the mainnet limits are fixed')
+    const l = value.llmLimits
+    if (!isRecord(l) || !Number.isInteger(l.perDay) || !Number.isInteger(l.perMonth) || (l.perDay as number) < 1 || (l.perMonth as number) < 1) {
+      throw new Error('config: "llmLimits" must be { "perDay": n, "perMonth": n } with positive integers')
+    }
+    llmLimits = { perDay: l.perDay as number, perMonth: l.perMonth as number }
+  }
+
   return {
     network,
     address: text(value, 'address'),
@@ -96,6 +110,7 @@ export function parseConfig(value: unknown): GardenerConfig {
     firstEpoch: firstEpoch as number,
     requireApproval,
     model: optionalText(value, 'model'),
+    llmLimits,
     chain,
     graphqlUrl: optionalText(value, 'graphqlUrl') ?? MAINNET_GRAPHQL,
   }

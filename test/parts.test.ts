@@ -11,6 +11,7 @@ import { buildReport, readEarlier, sha256Hex } from '../src/report'
 import { applyDecision, assertState, fileStateStore, initialState, memoryStateStore } from '../src/state'
 import { walrusReportStore, type WalrusLike } from '../src/walrus'
 import { sampleFacts } from './fixtures'
+import { MAINNET } from '../src/sources'
 import { HOUR, NOW, U } from './roundkit'
 
 const tempFile = (name: string) => join(mkdtempSync(join(tmpdir(), 'gardener-')), name)
@@ -199,6 +200,17 @@ describe('the cost brakes', () => {
     expect(inner.calls).toBe(1)
   })
 
+  it('use the limits they are given in place of the fixed ones', async () => {
+    const now = at('2026-11-10T12:00:00Z')
+    const calls = Array.from({ length: 6 }, (_, i) => now - (i + 1) * 60_000)
+    expect(llmAllowance(calls, now)).toMatchObject({ ok: false })
+    expect(llmAllowance(calls, now, { perDay: 50, perMonth: 500 })).toEqual({ ok: true })
+    const state = initialState(4)
+    state.llmCallsMs = calls
+    await expect(budgetedProvider({ generate: async () => ({}) }, state, () => now, { perDay: 50, perMonth: 500 }).generate({ system: 's', user: 'u' })).resolves.toEqual({})
+    await expect(budgetedProvider({ generate: async () => ({}) }, state, () => now).generate({ system: 's', user: 'u' })).rejects.toThrow(/call refused/)
+  })
+
   it('forget calls older than forty days when recording a new one', async () => {
     const state = initialState(4)
     state.llmCallsMs = [NOW - 41 * 24 * HOUR]
@@ -369,6 +381,20 @@ describe('the configuration', () => {
     ['testnet', { network: 'testnet' }, /testnet deployment must give its own "chain"/],
   ])('refuses a bad %s', (_name, patch, message) => {
     expect(() => parseConfig({ ...good(), ...patch })).toThrow(message)
+  })
+
+  describe('the model-call limits', () => {
+    const testnet = () => ({ ...good(), network: 'testnet', chain: MAINNET })
+    it('stay fixed unless a testnet rehearsal raises them', () => {
+      expect(parseConfig(good()).llmLimits).toBeNull()
+      expect(parseConfig({ ...testnet(), llmLimits: { perDay: 200, perMonth: 2000 } }).llmLimits).toEqual({ perDay: 200, perMonth: 2000 })
+    })
+    it('cannot be raised on mainnet, where they are a brake on real money', () => {
+      expect(() => parseConfig({ ...good(), llmLimits: { perDay: 200, perMonth: 2000 } })).toThrow(/only be set on a testnet deployment/)
+    })
+    it.each([{ perDay: 0, perMonth: 5 }, { perDay: 'many', perMonth: 5 }, { perDay: 5 }, 'lots'])('refuses limits that are not two positive integers: %j', (limits) => {
+      expect(() => parseConfig({ ...testnet(), llmLimits: limits })).toThrow(/llmLimits/)
+    })
   })
 
   it('refuses a config that is not an object, or is missing a required setting', () => {

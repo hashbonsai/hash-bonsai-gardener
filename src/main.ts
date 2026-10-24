@@ -73,6 +73,7 @@ async function main(): Promise<number> {
       }),
       notifier: secrets.webhook ? discordNotifier(secrets.webhook, { log }) : consoleNotifier(log),
       systemPrompt: readFileSync(config.promptFile, 'utf8'),
+      ...(config.llmLimits ? { limits: config.llmLimits } : {}),
       log,
     })
     log(`round: ${outcome.kind}${'epoch' in outcome && outcome.epoch !== null ? ` (epoch ${outcome.epoch})` : ''}${outcome.kind === 'blocked' ? `: ${outcome.reason}` : ''}${outcome.kind === 'failed' ? `: ${outcome.error}` : ''}`)

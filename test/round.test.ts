@@ -242,6 +242,13 @@ describe('the cost brakes', () => {
     expect(k.state.current.pending).toBeNull()
   })
 
+  it('lets a rehearsal raise the model-call limit through its deps', async () => {
+    const k = kit({ state: { llmCallsMs: [40, 30, 20, 10].map((m) => NOW - m * 60_000) } })
+    k.deps.limits = { perDay: 50, perMonth: 500 }
+    expect(await k.round()).toMatchObject({ kind: 'awaiting-approval' })
+    expect(k.llm.calls).toHaveLength(1)
+  })
+
   it('stops when the gardener holds less than 0.1 SUI', async () => {
     const k = kit({ src: { balances: async () => ({ sui: 50_000_000n, wal: 9_990_000_000n }) } })
     expect(await k.round()).toMatchObject({ kind: 'blocked' })

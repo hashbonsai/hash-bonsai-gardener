@@ -8,7 +8,8 @@ import type { State } from './state'
  * gardener's address holds at least 0.1 SUI and enough WAL for one save.
  */
 
-export const LLM_LIMITS = { perDay: 4, perMonth: 16 } as const
+export type LlmLimits = { perDay: number; perMonth: number }
+export const LLM_LIMITS: LlmLimits = { perDay: 4, perMonth: 16 }
 /** 0.1 SUI, in MIST. */
 export const MIN_SUI = 100_000_000n
 
@@ -25,10 +26,10 @@ export function llmUsage(callsMs: number[], nowMs: number): { today: number; mon
 
 export type Allowance = { ok: true } | { ok: false; reason: string }
 
-export function llmAllowance(callsMs: number[], nowMs: number): Allowance {
+export function llmAllowance(callsMs: number[], nowMs: number, limits: LlmLimits = LLM_LIMITS): Allowance {
   const u = llmUsage(callsMs, nowMs)
-  if (u.today >= LLM_LIMITS.perDay) return { ok: false, reason: `the model has been called ${u.today} times today (the limit is ${LLM_LIMITS.perDay} a day)` }
-  if (u.month >= LLM_LIMITS.perMonth) return { ok: false, reason: `the model has been called ${u.month} times this month (the limit is ${LLM_LIMITS.perMonth} a month)` }
+  if (u.today >= limits.perDay) return { ok: false, reason: `the model has been called ${u.today} times today (the limit is ${limits.perDay} a day)` }
+  if (u.month >= limits.perMonth) return { ok: false, reason: `the model has been called ${u.month} times this month (the limit is ${limits.perMonth} a month)` }
   return { ok: true }
 }
 
@@ -46,12 +47,12 @@ export function fundsAllowance(balances: { sui: bigint; wal: bigint }, storageCo
  * limit. A refusal is permanent for the writer (retrying today is no use), so
  * the report falls back to the figures instead of looping.
  */
-export function budgetedProvider(inner: LlmProvider, state: State, nowMs: () => number): LlmProvider {
+export function budgetedProvider(inner: LlmProvider, state: State, nowMs: () => number, limits: LlmLimits = LLM_LIMITS): LlmProvider {
   return {
     servedModel: () => inner.servedModel?.() ?? null,
     async generate(input) {
       const now = nowMs()
-      const allowance = llmAllowance(state.llmCallsMs, now)
+      const allowance = llmAllowance(state.llmCallsMs, now, limits)
       if (!allowance.ok) throw new LlmCallError(`call refused: ${allowance.reason}`, 'permanent')
       state.llmCallsMs = [...state.llmCallsMs.filter((t) => now - t < KEEP_MS), now]
       return inner.generate(input)

@@ -1,4 +1,4 @@
-import { fundsAllowance, llmAllowance, budgetedProvider } from './budget'
+import { fundsAllowance, llmAllowance, budgetedProvider, type LlmLimits } from './budget'
 import { collectRawEpoch, type Sources } from './collect'
 import { buildFacts } from './facts'
 import type { LlmProvider } from './llm'
@@ -39,6 +39,8 @@ export type RoundDeps = {
   store: ReportStore
   notifier: Notifier
   systemPrompt: string
+  /** Replaces the model-call limits; only a testnet rehearsal may (see `config.ts`). */
+  limits?: LlmLimits
   log: (line: string) => void
 }
 
@@ -107,7 +109,7 @@ export async function runRound(deps: RoundDeps): Promise<RoundOutcome> {
     // The cost brakes, before anything is spent.
     const maxEpochs = await deps.store.maxEpochs()
     const cost = await deps.store.estimate(ESTIMATED_REPORT_BYTES, maxEpochs)
-    const gate = [llmAllowance(state.llmCallsMs, now), fundsAllowance(balances, cost)].find((a) => !a.ok)
+    const gate = [llmAllowance(state.llmCallsMs, now, deps.limits), fundsAllowance(balances, cost)].find((a) => !a.ok)
     if (gate && !gate.ok) {
       await say(`budget-${epoch}`, `Epoch ${epoch}'s report is held back: ${gate.reason}. Nothing was stored or posted.`)
       persist()
@@ -128,7 +130,7 @@ export async function runRound(deps: RoundDeps): Promise<RoundOutcome> {
     const previousReports = await loadPrevious(deps.store, state.previousBlobId, deps.log)
 
     // The words.
-    const llm = budgetedProvider(deps.llm, state, deps.nowMs)
+    const llm = budgetedProvider(deps.llm, state, deps.nowMs, deps.limits)
     const written = await composeReport(llm, {
       facts,
       followups,
