@@ -119,6 +119,19 @@ export function settledByGardenerIn(text: string): string | null {
 }
 
 /**
+ * The same for PRUNE: 「PRUNE を配布しました」 reads as if the Gardener handed it out. The game's
+ * `advance` does (anyone may call it) and the Gardener holds no PRUNE; the report says it
+ * 「が配布されました」 instead.
+ */
+export const HANDED_OUT_BY_GARDENER_JA = ['を配布しました', 'を配布した'] as const
+
+/** The first phrase in the Japanese text that reads as the Gardener having handed PRUNE out, or null. */
+export function handedOutByGardenerIn(text: string): string | null {
+  for (const w of HANDED_OUT_BY_GARDENER_JA) if (text.includes(w)) return w
+  return null
+}
+
+/**
  * The first Japanese spelling the glossary rules out, or null. Used on text
  * that is not itself Japanese copy (an observation's sentence), where an
  * English word like "Standing" is fine but a banned Japanese spelling is not.

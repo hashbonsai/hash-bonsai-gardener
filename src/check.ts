@@ -3,6 +3,7 @@ import { allowedNumbers, disallowedNumbers, factFiguresIn } from './numbers'
 import {
   forbiddenTermJaIn,
   forbiddenWordIn,
+  handedOutByGardenerIn,
   LIMITS,
   notInJaCommentaryIn,
   numberWordIn,
@@ -109,6 +110,8 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     if (voice) reasons.push(`ja: 「${voice}」 is not used in the commentary (it reads as the PRUNE token, or as a name for the AI or the players); speak as 「私」`)
     const settled = name === 'ja' ? settledByGardenerIn(text) : null
     if (settled) reasons.push(`ja: 「${settled}」 reads as if the Gardener settled the epoch, but the game does and the Gardener calls no game function — write 「シーズン N が確定しました」`)
+    const handedOut = name === 'ja' ? handedOutByGardenerIn(text) : null
+    if (handedOut) reasons.push(`ja: 「${handedOut}」 reads as if the Gardener handed the PRUNE out, but the game does and the Gardener holds no PRUNE — write 「…が配布されました」`)
     const released = name === 'ja' ? pruneReleasedSentenceIn(text) : null
     if (released) reasons.push(`ja: 「放出」 is the SUI prize's word (放出額); a PRUNE handout is 「配布」 — in the sentence "${released.slice(0, 60)}"`)
     for (const n of disallowedNumbers(text, allowed)) reasons.push(`${name}: number "${n.text}" is not in the facts`)

@@ -201,13 +201,13 @@ describe('checkReport', () => {
     })
     it.each(['$PRUNE', '$prune', '$Prune'])('rejects 「%s」 in the English text, the Japanese text and the cast', (ticker) => {
       for (const field of ['en', 'ja', 'cast'] as const) {
-        const text = field === 'ja' ? `シーズン 5 は ${ticker} を 12 人に配布しました。` : `Epoch 5 handed ${ticker} to 12 players.`
+        const text = field === 'ja' ? `シーズン 5 は ${ticker} が 12 人に配布されました。` : `Epoch 5 handed ${ticker} to 12 players.`
         const got = reasons(checkReport(report({ [field]: text }), ctx)).join()
         expect(got).toContain(`${field}: "${ticker}" reads as a ticker; write PRUNE`)
       }
     })
     it('accepts PRUNE written as the token is', () => {
-      expect(checkReport(report({ en: 'Epoch 5: 12 players shared PRUNE.', ja: 'シーズン 5 は PRUNE を参加者 12 人に配布しました。' }), ctx).ok).toBe(true)
+      expect(checkReport(report({ en: 'Epoch 5: 12 players shared PRUNE.', ja: 'シーズン 5 は PRUNE が参加者 12 人に配布されました。' }), ctx).ok).toBe(true)
     })
     it('accepts the examples of looking back that the instructions give, in both languages', () => {
       const prompt = readFileSync(new URL('../prompts/system.md', import.meta.url), 'utf8')
@@ -246,19 +246,43 @@ describe('checkReport', () => {
       expect(got).toMatch(/「放出」 is the SUI prize's word.*配布/)
       expect(got).toContain('ランキングに 100,000 PRUNE')
     })
-    it('accepts the same sentence with 配布', () => {
-      expect(checkReport(ja('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
+    it('accepts the same sentence with 配布, said of the PRUNE and not of the Gardener', () => {
+      expect(checkReport(ja('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE が配布されました。'), ctx).ok).toBe(true)
     })
     it('accepts 放出額 for the SUI prize in a sentence of its own', () => {
-      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。ランキングに 100,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
-      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。\nランキングに 100,000 PRUNE を配布しました。'), ctx).ok).toBe(true)
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。ランキングに 100,000 PRUNE が配布されました。'), ctx).ok).toBe(true)
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI でした。\nランキングに 100,000 PRUNE が配布されました。'), ctx).ok).toBe(true)
     })
     it('refuses them in one sentence however they are ordered', () => {
-      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI で、PRUNE は 100,000 を配布しました。'), ctx).ok).toBe(false)
+      expect(checkReport(ja('シーズン 5 の放出額は 25.5 SUI で、PRUNE は 100,000 が配布されました。'), ctx).ok).toBe(false)
       expect(checkReport(ja('PRUNE を 100,000 配布し、放出額は 25.5 SUI でした。'), ctx).ok).toBe(false)
     })
     it('applies to the Japanese text only', () => {
       expect(checkReport(report({ en: 'Epoch 5 released 100,000 PRUNE to the ranking.' }), ctx).ok).toBe(true)
+    })
+  })
+
+  describe('the Gardener does not hand PRUNE out: the game does', () => {
+    it.each(['を配布しました', 'を配布した'])('rejects 「%s」 in the Japanese text, which reads as if the Gardener handed it out', (phrase) => {
+      const got = reasons(checkReport(report({ ja: `ランキングに 100,000 PRUNE ${phrase}。` }), ctx)).join()
+      expect(got).toContain(`「${phrase}」 reads as if the Gardener handed the PRUNE out`)
+      expect(got).toContain('…が配布されました')
+    })
+    it('rejects it in the sentence the instructions used to give as an example', () => {
+      expect(checkReport(report({ ja: 'ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE を配布しました。' }), ctx).ok).toBe(false)
+    })
+    it('accepts 「が配布されました」, and 「配布」 on its own', () => {
+      expect(checkReport(report({ ja: 'ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE が配布されました。' }), ctx).ok).toBe(true)
+      expect(checkReport(report({ ja: 'シーズン 5 の PRUNE の配布は、ランキングに 100,000 PRUNE でした。' }), ctx).ok).toBe(true)
+    })
+    it('applies to the Japanese text only', () => {
+      expect(checkReport(report({ en: 'Epoch 5: 100,000 PRUNE were handed out to the ranking.' }), ctx).ok).toBe(true)
+    })
+    it('accepts the example the instructions give now', () => {
+      const prompt = readFileSync(new URL('../prompts/system.md', import.meta.url), 'utf8')
+      const ja = 'ランキングに 55,000 PRUNE、保有者に 600 PRUNE が配布されました。'
+      expect(prompt).toContain(ja)
+      expect(checkReport(report({ en: '55,000 PRUNE went to the Standing and 600 PRUNE to holders.', ja }), { ...ctx, facts: sampleFacts({ prune: { ...sampleFacts().prune!, standingEmission: 55_000, holderEmission: 600 } }) }).ok).toBe(true)
     })
   })
 

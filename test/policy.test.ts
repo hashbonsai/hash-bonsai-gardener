@@ -6,6 +6,8 @@ import {
   FORBIDDEN_WORDS_JA,
   forbiddenTermJaIn,
   forbiddenWordIn,
+  HANDED_OUT_BY_GARDENER_JA,
+  handedOutByGardenerIn,
   JAPANESE_SPELLINGS_RULED_OUT,
   LIMITS,
   NOT_IN_JA_COMMENTARY,
@@ -57,6 +59,14 @@ describe('policy', () => {
     expect(forbiddenTermJaIn('Arena の木')).toBe('Arena')
     expect(forbiddenTermJaIn('Gardener の記録')).toBe('Gardener')
     expect(forbiddenTermJaIn('シーズン 5 の Bonsai、ランキング、アリーナ、庭師、スコアに変換')).toBeNull()
+  })
+  it('pins the phrases that make the Gardener the one who handed PRUNE out, and finds them', () => {
+    expect([...HANDED_OUT_BY_GARDENER_JA]).toEqual(['を配布しました', 'を配布した'])
+    expect(handedOutByGardenerIn('ランキングに 100,000 PRUNE を配布しました。')).toBe('を配布しました')
+    expect(handedOutByGardenerIn('100,000 PRUNE を配布した。')).toBe('を配布した')
+    expect(handedOutByGardenerIn('ランキングに 100,000 PRUNE が配布されました。')).toBeNull()
+    expect(handedOutByGardenerIn('PRUNE の配布は 100,000 でした。')).toBeNull()
+    expect(handedOutByGardenerIn('PRUNE を配布し、')).toBeNull()
   })
   it('pins the words the Japanese commentary does not use, and finds them as parts of longer words', () => {
     expect([...NOT_IN_JA_COMMENTARY]).toEqual(['剪定', '刈り取', '庭師'])

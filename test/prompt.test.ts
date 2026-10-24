@@ -17,10 +17,23 @@ describe('the system prompt', () => {
   })
 
   it('says PRUNE is 配布 in Japanese, and never 放出, which is the SUI prize’s word', () => {
-    expect(prompt).toContain('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE を配布しました')
-    expect(prompt).toContain('ランキングに 55,000 PRUNE、保有者に 600 PRUNE を配布しました。')
+    expect(prompt).toContain('ランキングに 100,000 PRUNE、保有者に 50,000 PRUNE が配布されました')
+    expect(prompt).toContain('ランキングに 55,000 PRUNE、保有者に 600 PRUNE が配布されました。')
     expect(prompt).not.toMatch(/PRUNE[^。\n]*が放出されました/)
     expect(prompt).toContain('放出額')
+  })
+
+  it('says the game hands PRUNE out, never that the Gardener did: not 「を配布しました」 or 「を配布した」, and the examples do not use them', () => {
+    const glossary = prompt.split('\n').find((l) => l.includes('| PRUNE handed out')) ?? ''
+    expect(glossary).toContain('Never 「を配布しました」 or 「を配布した」')
+    expect(glossary).toContain('the Gardener holds no PRUNE')
+    const rule = prompt.split('\n').find((l) => l.startsWith('10. ')) ?? ''
+    expect(rule).toContain('it is handed out by the game, not by you')
+    expect(rule).toContain('Never 「を配布しました」 or 「を配布した」')
+    // Outside of the sentences that forbid them, the two phrases appear nowhere in the instructions.
+    const without = prompt.replaceAll('Never 「を配布しました」 or 「を配布した」', '')
+    expect(without).not.toContain('を配布しました')
+    expect(without).not.toContain('を配布した')
   })
 
   it('does not ask for the amount left, nor for what PRUNE is worth', () => {
