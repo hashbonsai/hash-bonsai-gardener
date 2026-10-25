@@ -14,6 +14,7 @@ import {
   notInJaCommentaryIn,
   numberWordIn,
   pruneReleasedSentenceIn,
+  pruningWordEnIn,
   ruledOutJapaneseSpellingIn,
   SETTLED_BY_GARDENER_JA,
   settledByGardenerIn,
@@ -40,7 +41,7 @@ describe('policy', () => {
     expect([...FORBIDDEN_TERMS_JA]).toEqual(['盆栽', 'ボンサイ', '盆景', 'エポック', 'バーン', '精算', '清算', 'Standing', 'Arena', 'Gardener'])
   })
   it('pins the limits', () => {
-    expect(LIMITS).toEqual({ commentaryChars: 600, commentaryWordsEn: 120, castBytes: 320, observations: { min: 0, max: 3 }, factFigures: 4 })
+    expect(LIMITS).toEqual({ commentaryChars: 600, commentaryWordsEn: 120, castBytes: 320, observations: { min: 1, max: 3 }, factFigures: 4 })
   })
 
   it('finds a forbidden word as a part of a longer word, in any case', () => {
@@ -74,6 +75,16 @@ describe('policy', () => {
     expect(notInJaCommentaryIn('刈り取りの季節')).toBe('刈り取')
     expect(notInJaCommentaryIn('庭師の記録')).toBe('庭師')
     expect(notInJaCommentaryIn('シーズン 5 の Bonsai、ランキング、アリーナ、私の記録、PRUNE を配布')).toBeNull()
+  })
+  it('finds the English words of pruning, in any case, and lets the token in capitals through', () => {
+    expect(pruningWordEnIn('pruning the garden')).toBe('pruning')
+    expect(pruningWordEnIn('Pruned at dawn')).toBe('Pruned')
+    expect(pruningWordEnIn('to prune')).toBe('prune')
+    expect(pruningWordEnIn('unpruned')).toBe('unpruned')
+    expect(pruningWordEnIn('100,000 PRUNE to the ranking')).toBeNull()
+    expect(pruningWordEnIn('PRUNE and PRUNE.')).toBeNull()
+    expect(pruningWordEnIn('PRUNE, then pruning')).toBe('pruning')
+    expect(pruningWordEnIn('Epoch 5 closed with 12 players.')).toBeNull()
   })
   it('finds "$PRUNE" in any case, and not PRUNE', () => {
     expect(tickerPruneIn('buy $PRUNE')).toBe('$PRUNE')

@@ -8,6 +8,7 @@ import {
   notInJaCommentaryIn,
   numberWordIn,
   pruneReleasedSentenceIn,
+  pruningWordEnIn,
   ruledOutJapaneseSpellingIn,
   settledByGardenerIn,
   tickerPruneIn,
@@ -106,6 +107,8 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
     if (term) reasons.push(`ja: house style does not allow "${term}" (use the game's Japanese term from the glossary in the instructions)`)
     const ticker = tickerPruneIn(text)
     if (ticker) reasons.push(`${name}: "${ticker}" reads as a ticker; write PRUNE`)
+    const pruning = name === 'ja' ? null : pruningWordEnIn(text)
+    if (pruning) reasons.push(`${name}: "${pruning}" reads as the PRUNE token; the token is written PRUNE, and the words of pruning are not used`)
     const voice = name === 'ja' ? notInJaCommentaryIn(text) : null
     if (voice) reasons.push(`ja: 「${voice}」 is not used in the commentary (it reads as the PRUNE token, or as a name for the AI or the players); speak as 「私」`)
     const settled = name === 'ja' ? settledByGardenerIn(text) : null
@@ -139,8 +142,21 @@ export function checkReport(report: LlmReport, ctx: CheckContext): CheckResult {
   if (typeof report.cast === 'string' && utf8Bytes(report.cast) > ctx.castBudgetBytes) {
     reasons.push(`cast: ${utf8Bytes(report.cast)} bytes exceeds ${ctx.castBudgetBytes}`)
   }
-  if (!Array.isArray(report.observations)) reasons.push('observations: not an array')
+  let observations: Observation[] = []
+  if (!Array.isArray(report.observations)) {
+    reasons.push('observations: not an array')
+  } else {
+    observations = acceptObservations(report.observations, ctx.facts, allowed)
+    // A report that passes has at least one thing to check next epoch; the figures-only text, which has none, is not checked here.
+    if (observations.length < LIMITS.observations.min) {
+      reasons.push(
+        report.observations.length === 0
+          ? `observations: none given; give ${LIMITS.observations.min} to ${LIMITS.observations.max}`
+          : `observations: none of the ${report.observations.length} given could be used (each needs a known metric of which the facts have a figure, a direction of up, down or flat, and an English statement that passes the same checks as the text); give ${LIMITS.observations.min} to ${LIMITS.observations.max} that can`,
+      )
+    }
+  }
 
   if (reasons.length > 0) return { ok: false, reasons }
-  return { ok: true, observations: acceptObservations(report.observations, ctx.facts, allowed) }
+  return { ok: true, observations }
 }

@@ -56,7 +56,8 @@ export const LIMITS = {
   commentaryWordsEn: 120,
   /** A normal Farcaster cast, in bytes, before the fixed suffix is taken off. */
   castBytes: 320,
-  observations: { min: 0, max: 3 },
+  /** A report written by the model has at least one; the figures-only text, which has none, is not checked. */
+  observations: { min: 1, max: 3 },
   /** Figures of the facts that the English commentary, and the Japanese, may each use; the table has the rest. */
   factFigures: 4,
 } as const
@@ -98,6 +99,15 @@ export const NOT_IN_JA_COMMENTARY = ['剪定', '刈り取', '庭師'] as const
 export function notInJaCommentaryIn(text: string): string | null {
   for (const w of NOT_IN_JA_COMMENTARY) if (text.includes(w)) return w
   return null
+}
+
+/**
+ * The English words of pruning (pruning, pruned, prune the tree, ...) read as the PRUNE token. The
+ * token's own name, in capitals, is fine. The first such word in `text`, or null.
+ */
+export function pruningWordEnIn(text: string): string | null {
+  const withoutToken = text.replace(/\bPRUNE\b/g, ' ')
+  return /\w*prun\w*/i.exec(withoutToken)?.[0] ?? null
 }
 
 /** "$PRUNE" is a ticker, which reads as talk of the token's price. Not written in any language, in any case. */

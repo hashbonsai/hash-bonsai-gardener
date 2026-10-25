@@ -196,8 +196,22 @@ describe('checkReport', () => {
       expect(reasons(checkReport(report({ ja: 'シーズン 5 の庭師は 12 人でした。' }), ctx)).join()).toContain('「庭師」 is not used')
       expect(reasons(checkReport(report({ ja: 'シーズン 5 は剪定の季節でした。参加者は 12 人。' }), ctx)).join()).toContain('「剪定」 is not used')
     })
-    it('lets the English text and the cast use the same words: the ban is on the Japanese commentary', () => {
-      expect(checkReport(report({ en: 'Epoch 5: I watched the Standing like a gardener would, 12 players.', cast: 'Epoch 5, pruned and watched.' }), ctx).ok).toBe(true)
+    it('lets the English text and the cast say "gardener": the ban on 「庭師」 is on the Japanese commentary', () => {
+      expect(checkReport(report({ en: 'Epoch 5: I watched the Standing like a gardener would, 12 players.', cast: 'Epoch 5, watched by the gardener.' }), ctx).ok).toBe(true)
+    })
+    it.each(['pruning', 'pruned', 'prune', 'Pruning', 'unpruned', 'prunes'])('rejects the English word 「%s」, which reads as the token', (word) => {
+      for (const field of ['en', 'cast'] as const) {
+        const got = reasons(checkReport(report({ [field]: `Epoch 5: I was ${word} the garden, 12 players.` }), ctx)).join()
+        expect(got).toContain(`${field}: "`)
+        expect(got).toContain('reads as the PRUNE token')
+      }
+    })
+    it('lets the token be named in capitals, wherever it stands, and still catches a pruning word next to it', () => {
+      expect(checkReport(report({ en: 'Epoch 5: PRUNE went to 12 players. PRUNE, again.', cast: 'PRUNE, epoch 5.' }), ctx).ok).toBe(true)
+      expect(reasons(checkReport(report({ en: 'Epoch 5: PRUNE and pruning, 12 players.' }), ctx)).join()).toContain('"pruning"')
+    })
+    it('keeps refusing 「剪定」 in the Japanese text as before', () => {
+      expect(reasons(checkReport(report({ ja: 'シーズン 5 は剪定の季節で、参加者は 12 人でした。' }), ctx)).join()).toContain('「剪定」 is not used')
     })
     it.each(['$PRUNE', '$prune', '$Prune'])('rejects 「%s」 in the English text, the Japanese text and the cast', (ticker) => {
       for (const field of ['en', 'ja', 'cast'] as const) {
@@ -325,6 +339,68 @@ describe('checkReport', () => {
 
   it('rejects an empty text', () => {
     expect(reasons(checkReport(report({ en: '  ' }), ctx)).join()).toMatch(/en: empty/)
+  })
+})
+
+describe('a report needs at least one observation', () => {
+  const obs = (over: Record<string, string> = {}) => ({ metric: 'players', direction: 'up', statement: 'Players should rise.', ...over })
+
+  it('is refused with none, and says how many to give', () => {
+    const got = reasons(checkReport(report({ observations: [] }), ctx))
+    expect(got).toEqual(['observations: none given; give 1 to 3'])
+  })
+  it('is refused when none of those given can be used, and says what one needs', () => {
+    const got = reasons(checkReport(report({ observations: [obs({ metric: 'bananas' }), obs({ direction: 'sideways' })] }), ctx)).join()
+    expect(got).toContain('observations: none of the 2 given could be used')
+    expect(got).toContain('a known metric of which the facts have a figure')
+  })
+  it('is refused when its metric is one the facts could not read', () => {
+    const got = reasons(checkReport(report({ observations: [obs({ metric: 'mints' })] }), { ...ctx, facts: sampleFacts({ mints: null }) })).join()
+    expect(got).toContain('none of the 1 given could be used')
+    // Only the total of mints is known: there is no increase to expect more or less of.
+    expect(reasons(checkReport(report({ observations: [obs({ metric: 'mints' })] }), { ...ctx, facts: sampleFacts({ mints: { cumulative: 108, delta: null } }) })).join()).toContain('none of the 1 given')
+  })
+  it('passes with one usable, and keeps only the usable ones', () => {
+    const r = checkReport(report({ observations: [obs({ metric: 'bananas' }), obs({ metric: 'drains', direction: 'down', statement: 'Drains may ease.' })] }), ctx)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.observations.map((o) => o.metric)).toEqual(['drains'])
+  })
+  it('is reported together with the other reasons, so that one retry can mend them all', () => {
+    const got = reasons(checkReport(report({ en: 'Epoch 5 saw 99 players.', observations: [] }), ctx))
+    expect(got).toEqual(expect.arrayContaining([expect.stringContaining('number "99"'), 'observations: none given; give 1 to 3']))
+  })
+  it('is not asked of the figures-only text, which has none and does not pass through the check', async () => {
+    const { composeReport } = await import('../src/write')
+    const llm = { generate: async () => ({ ...CLEAN_REPORT, observations: [] }) }
+    const r = await composeReport(llm, { facts, followups: [], observations: [], notes: [], previousReports: [], systemPrompt: 'S', reportUrl: 'https://aggregator.example/v1/blobs/abc' })
+    expect(r).toMatchObject({ fallback: true, fallbackReason: 'checks', observations: [], attempts: 2 })
+    expect(r.failures.at(-1)).toEqual(['observations: none given; give 1 to 3'])
+  })
+  it('mends itself on the retry when the second answer has one', async () => {
+    const { composeReport } = await import('../src/write')
+    const answers = [{ ...CLEAN_REPORT, observations: [] }, CLEAN_REPORT]
+    const llm = { generate: async () => answers.shift() }
+    const r = await composeReport(llm, { facts, followups: [], observations: [], notes: [], previousReports: [], systemPrompt: 'S', reportUrl: 'https://aggregator.example/v1/blobs/abc' })
+    expect(r).toMatchObject({ fallback: false, attempts: 2 })
+    expect(r.observations).toHaveLength(1)
+  })
+})
+
+describe('the outlook sentence the instructions give', () => {
+  const prompt = readFileSync(new URL('../prompts/system.md', import.meta.url), 'utf8')
+  const en = 'Next epoch I expect a few more players in the garden.'
+  const ja = '次のシーズン、庭の参加者はもう少し増えると見ています。'
+
+  it('is in the instructions, and passes every check with no number in it', () => {
+    expect(prompt).toContain(en)
+    expect(prompt).toContain(ja)
+    expect(extractNumbers(en)).toEqual([])
+    expect(extractNumbers(ja)).toEqual([])
+    expect(checkReport(report({ en, ja }), ctx).ok).toBe(true)
+  })
+  it('leaves the four figures as they are: the outlook adds none to the count', () => {
+    const fourFigures = 'Epoch 5: 12 players, 40 burns, 22 drains and 70 trees. '
+    expect(checkReport(report({ en: fourFigures + en }), ctx).ok).toBe(true)
   })
 })
 

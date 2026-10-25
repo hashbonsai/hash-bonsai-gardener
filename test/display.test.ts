@@ -31,7 +31,7 @@ const report = (over: Partial<typeof CLEAN_REPORT> = {}) => ({
   en: 'Epoch 3 closed with 4 players. The prize pool paid out 7.178 SUI.',
   ja: 'シーズン 3 は参加者 4 人で、Crown Seed に封入した賞金は 7.178 SUI でした。',
   cast: 'Epoch 3 closed with 4 players.',
-  observations: [],
+  observations: [{ metric: 'players', direction: 'up', statement: 'Players should rise.' }],
   ...over,
 })
 const ok = (r: ReturnType<typeof report>) => checkReport(r, { facts: epoch3(), castBudgetBytes: 200 })
