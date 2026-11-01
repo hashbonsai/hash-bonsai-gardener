@@ -303,7 +303,7 @@ describe('the stored report', () => {
       memory: { recalled: ['mem-a'], written: ['mem-1'] },
     })
     expect(r.facts).toEqual(sampleFacts())
-    expect(r.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 3 → epoch 5: 5. it held.'])
+    expect(r.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 3 → epoch 5: 5. As expected.'])
     expect(r.notebook.ja[0]).toContain('シーズン 4 の観察')
   })
 

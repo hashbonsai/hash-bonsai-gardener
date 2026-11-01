@@ -32,7 +32,7 @@ describe('compareWithAndWithoutMemory', () => {
 
   it('shows the notebook line only for the side that remembers', async () => {
     const out = await compareWithAndWithoutMemory(deps([earlier]).deps, 5)
-    expect(out.withMemory.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 1 → epoch 5: 2. it held.'])
+    expect(out.withMemory.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 1 → epoch 5: 2. As expected.'])
     expect(out.withMemory.notebook.ja[0]).toContain('シーズン 4 の観察')
     expect(out.withoutMemory.notebook).toEqual({ en: [], ja: [] })
   })

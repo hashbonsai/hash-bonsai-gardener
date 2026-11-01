@@ -64,12 +64,18 @@ describe('factsTable', () => {
 describe('notebookLines', () => {
   const f: Followup = { observationId: 'obs-5-1', fromEpoch: 5, toEpoch: 6, metric: 'players', before: 3, after: 5, verdict: 'continued' }
   it('states the numbers and the verdict the code computed', () => {
-    expect(notebookLines([f], 'en')).toEqual(['Epoch 5 note on players in the Standing: 3 → epoch 6: 5. it held.'])
-    expect(notebookLines([f], 'ja')).toEqual(['シーズン 5 の観察(ランキングの参加者): 3 → シーズン 6: 5。続いた。'])
+    expect(notebookLines([f], 'en')).toEqual(['Epoch 5 note on players in the Standing: 3 → epoch 6: 5. As expected.'])
+    expect(notebookLines([f], 'ja')).toEqual(['シーズン 5 の観察(ランキングの参加者): 3 → シーズン 6: 5。見立てどおり'])
   })
   it('has a line for each verdict', () => {
-    const lines = (['continued', 'reversed', 'flat'] as const).map((v) => notebookLines([{ ...f, verdict: v }], 'en')[0])
-    expect(lines.join('\n')).toMatch(/it held[\s\S]*the other way[\s\S]*no change/)
+    const verdicts = ['continued', 'reversed', 'flat'] as const
+    const en = verdicts.map((v) => notebookLines([{ ...f, verdict: v }], 'en')[0])
+    expect(en.join('\n')).toMatch(/As expected\.[\s\S]*Not as expected\.[\s\S]*Unchanged\./)
+    const ja = verdicts.map((v) => notebookLines([{ ...f, verdict: v }], 'ja')[0])
+    expect(ja[0].endsWith('見立てどおり')).toBe(true)
+    expect(ja[1].endsWith('見立てと違う')).toBe(true)
+    expect(ja[2].endsWith('横ばい')).toBe(true)
+    for (const line of ja) expect(line.endsWith('。')).toBe(false)
   })
 })
 

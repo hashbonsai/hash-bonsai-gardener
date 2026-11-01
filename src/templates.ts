@@ -92,9 +92,9 @@ const METRIC: Record<ObservationMetric, { en: string; ja: string }> = {
 }
 
 const VERDICT: Record<Verdict, { en: string; ja: string }> = {
-  continued: { en: 'it held', ja: '続いた' },
-  reversed: { en: 'it turned the other way', ja: '逆になった' },
-  flat: { en: 'no change', ja: '変わらなかった' },
+  continued: { en: 'As expected', ja: '見立てどおり' },
+  reversed: { en: 'Not as expected', ja: '見立てと違う' },
+  flat: { en: 'Unchanged', ja: '横ばい' },
 }
 
 /** One line per follow-up, numbers and verdict from code. */
@@ -104,7 +104,7 @@ export function notebookLines(followups: Followup[], lang: Lang): string[] {
     const [before, after] = [fmt(f.before, digits), fmt(f.after, digits)]
     return lang === 'en'
       ? `Epoch ${f.fromEpoch} note on ${METRIC[f.metric].en}: ${before} → epoch ${f.toEpoch}: ${after}. ${VERDICT[f.verdict].en}.`
-      : `シーズン ${f.fromEpoch} の観察(${METRIC[f.metric].ja}): ${before} → シーズン ${f.toEpoch}: ${after}。${VERDICT[f.verdict].ja}。`
+      : `シーズン ${f.fromEpoch} の観察(${METRIC[f.metric].ja}): ${before} → シーズン ${f.toEpoch}: ${after}。${VERDICT[f.verdict].ja}`
   })
 }
 
