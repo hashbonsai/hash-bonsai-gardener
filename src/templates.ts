@@ -1,5 +1,5 @@
 import { DIGITS, metricDigits } from './display'
-import type { Facts, Followup, Lang, ObservationMetric, Verdict } from './types'
+import type { Direction, Facts, Followup, Lang, Observation, ObservationMetric, Verdict } from './types'
 
 /**
  * Everything the model does not write: the table of figures, the voting
@@ -97,14 +97,47 @@ const VERDICT: Record<Verdict, { en: string; ja: string }> = {
   flat: { en: 'Unchanged', ja: '横ばい' },
 }
 
-/** One line per follow-up, numbers and verdict from code. */
+const DIRECTION: Record<Direction, { en: string; ja: string }> = {
+  up: { en: 'rise', ja: '増える' },
+  down: { en: 'fall', ja: '減る' },
+  flat: { en: 'hold', ja: '変わらない' },
+}
+
+/** The name of a metric as the subject of a Japanese sentence: a space before 「は」 when the name ends in a Latin letter or digit. */
+const metricTopicJa = (metric: ObservationMetric): string => {
+  const name = METRIC[metric].ja
+  return /[A-Za-z0-9]$/.test(name) ? `${name} は` : `${name}は`
+}
+
+/**
+ * One line per follow-up, numbers and verdict from code. A follow-up that
+ * recorded its direction says what was expected; the figure after the arrow is
+ * the epoch of the report that carries the line, so it takes no epoch name.
+ */
 export function notebookLines(followups: Followup[], lang: Lang): string[] {
   return followups.map((f) => {
     const digits = metricDigits(f.metric)
     const [before, after] = [fmt(f.before, digits), fmt(f.after, digits)]
+    if (f.direction) {
+      return lang === 'en'
+        ? `Epoch ${f.fromEpoch} expected ${METRIC[f.metric].en} to ${DIRECTION[f.direction].en}: ${before} → ${after}. ${VERDICT[f.verdict].en}.`
+        : `シーズン ${f.fromEpoch} の見立て: ${metricTopicJa(f.metric)}${DIRECTION[f.direction].ja}。${before} → ${after}。${VERDICT[f.verdict].ja}`
+    }
     return lang === 'en'
       ? `Epoch ${f.fromEpoch} note on ${METRIC[f.metric].en}: ${before} → epoch ${f.toEpoch}: ${after}. ${VERDICT[f.verdict].en}.`
       : `シーズン ${f.fromEpoch} の観察(${METRIC[f.metric].ja}): ${before} → シーズン ${f.toEpoch}: ${after}。${VERDICT[f.verdict].ja}`
+  })
+}
+
+/** One line per observation the report makes about the next epoch: what is expected and the figure it starts from, worded by code. */
+export function outlookLines(observations: Observation[], lang: Lang): string[] {
+  return observations.map((o) => {
+    const baseline = fmt(o.baseline, metricDigits(o.metric))
+    if (lang === 'en') {
+      const name = METRIC[o.metric].en
+      return `${name.charAt(0).toUpperCase()}${name.slice(1)} to ${DIRECTION[o.direction].en} (${baseline} this epoch)`
+    }
+    return `${metricTopicJa(o.metric)}${DIRECTION[o.direction].ja}(今シーズン ${baseline})`
   })
 }
 

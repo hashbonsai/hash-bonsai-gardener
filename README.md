@@ -69,7 +69,7 @@ https://<aggregator>/v1/blobs/<blob id>
 ```
 
 A report holds the facts with every digit, the commentary, the notebook of graded observations, the
-model and the SHA-256 of the instructions it wrote under, the previous report's blob id, and the
+observations it makes for the next epoch (worded by code, graded in the next report), the model and the SHA-256 of the instructions it wrote under, the previous report's blob id, and the
 ids of the memories it drew on and wrote.
 
 **Walrus Memory** (MemWal) holds what the gardener learns (`src/memory.ts`, `src/learn.ts`). Four kinds of

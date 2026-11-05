@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { notebookLines } from './templates'
+import { notebookLines, outlookLines } from './templates'
 import type { FallbackReason } from './templates'
 import type { Draft } from './state'
 import type { Facts } from './types'
@@ -21,6 +21,8 @@ export type Report = {
   text: { en: string; ja: string }
   /** The notebook: what became of the earlier observations, worked out by code. */
   notebook: { en: string[]; ja: string[] }
+  /** The observations this report makes about the next epoch, worded by code; the next report grades them. */
+  outlook: { en: string[]; ja: string[] }
   fallback: boolean
   fallbackReason: FallbackReason | null
   /** True when the epoch ran a ballot whose result was never applied in time: the report carries none. */
@@ -42,6 +44,7 @@ export function buildReport(draft: Draft, previousBlobId: string | null, memoryW
     facts: draft.facts,
     text: draft.fallback ? { en: '', ja: '' } : draft.commentary,
     notebook: { en: notebookLines(draft.followups, 'en'), ja: notebookLines(draft.followups, 'ja') },
+    outlook: { en: outlookLines(draft.observations, 'en'), ja: outlookLines(draft.observations, 'ja') },
     fallback: draft.fallback,
     fallbackReason: draft.fallbackReason,
     executeMissing: draft.executeMissing,

@@ -21,7 +21,7 @@ describe('compareWithAndWithoutMemory', () => {
 
     const withMemory = JSON.parse(model.calls[0].user)
     expect(withMemory.yourEarlierObservations).toHaveLength(1)
-    expect(withMemory.followups).toEqual([{ observationId: 'obs-4-1', fromEpoch: 4, toEpoch: 5, metric: 'players', before: 1, after: 2, verdict: 'continued' }])
+    expect(withMemory.followups).toEqual([{ observationId: 'obs-4-1', fromEpoch: 4, toEpoch: 5, metric: 'players', direction: 'up', before: 1, after: 2, verdict: 'continued' }])
     expect(model.calls[0].system).toContain('Be brief.')
 
     const without = JSON.parse(model.calls[1].user)
@@ -32,8 +32,8 @@ describe('compareWithAndWithoutMemory', () => {
 
   it('shows the notebook line only for the side that remembers', async () => {
     const out = await compareWithAndWithoutMemory(deps([earlier]).deps, 5)
-    expect(out.withMemory.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 1 → epoch 5: 2. As expected.'])
-    expect(out.withMemory.notebook.ja[0]).toContain('シーズン 4 の観察')
+    expect(out.withMemory.notebook.en).toEqual(['Epoch 4 expected players in the Standing to rise: 1 → 2. As expected.'])
+    expect(out.withMemory.notebook.ja).toEqual(['シーズン 4 の見立て: ランキングの参加者は増える。1 → 2。見立てどおり'])
     expect(out.withoutMemory.notebook).toEqual({ en: [], ja: [] })
   })
 

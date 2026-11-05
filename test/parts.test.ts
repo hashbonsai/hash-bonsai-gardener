@@ -10,6 +10,7 @@ import { chunk, consoleNotifier, discordNotifier, tell } from '../src/notify'
 import { buildReport, readEarlier, sha256Hex } from '../src/report'
 import { applyDecision, applyRedo, assertState, fileStateStore, initialState, memoryStateStore } from '../src/state'
 import { walrusReportStore, type WalrusLike } from '../src/walrus'
+import { outlookLines } from '../src/templates'
 import { sampleFacts } from './fixtures'
 import { MAINNET } from '../src/sources'
 import { HOUR, NOW, U } from './roundkit'
@@ -305,6 +306,21 @@ describe('the stored report', () => {
     expect(r.facts).toEqual(sampleFacts())
     expect(r.notebook.en).toEqual(['Epoch 4 note on players in the Standing: 3 → epoch 5: 5. As expected.'])
     expect(r.notebook.ja[0]).toContain('シーズン 4 の観察')
+  })
+
+  it('words the observations it makes about the next epoch by code', () => {
+    const observations = [
+      { id: 'obs-5-1', epoch: 5, metric: 'drains' as const, direction: 'down' as const, baseline: 22, statement: 'Drains may ease.' },
+      { id: 'obs-5-2', epoch: 5, metric: 'arenaTrees' as const, direction: 'up' as const, baseline: 70, statement: 'More trees.' },
+    ]
+    const r = buildReport({ ...draft(), observations }, null, [])
+    expect(r.outlook).toEqual({ en: outlookLines(observations, 'en'), ja: outlookLines(observations, 'ja') })
+    expect(r.outlook.en).toEqual(['Drains to fall (22 this epoch)', 'Bonsai in the Arena to rise (70 this epoch)'])
+    expect(r.outlook.ja).toEqual(['ドレインの回数は減る(今シーズン 22)', 'アリーナの Bonsai は増える(今シーズン 70)'])
+  })
+
+  it('has an empty outlook when the draft made no observation', () => {
+    expect(buildReport(draft(), null, []).outlook).toEqual({ en: [], ja: [] })
   })
 
   it('has no commentary when there is none to show', () => {

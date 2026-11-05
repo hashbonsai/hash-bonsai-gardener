@@ -109,6 +109,8 @@ export type Followup = {
   fromEpoch: number
   toEpoch: number
   metric: ObservationMetric
+  /** The direction the observation predicted. Absent in follow-ups drafted before it was recorded. */
+  direction?: Direction
   before: number
   after: number
   verdict: Verdict

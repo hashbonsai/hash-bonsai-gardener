@@ -486,7 +486,7 @@ describe('Walrus Memory', () => {
     k.llm.calls.length = 0
     await k.round()
     const user = JSON.parse(k.llm.calls[0].user)
-    expect(user.followups).toEqual([{ observationId: 'obs-5-1', fromEpoch: 5, toEpoch: 6, metric: 'players', before: 2, after: 3, verdict: 'continued' }])
+    expect(user.followups).toEqual([{ observationId: 'obs-5-1', fromEpoch: 5, toEpoch: 6, metric: 'players', direction: 'up', before: 2, after: 3, verdict: 'continued' }])
     expect(user.yourEarlierObservations).toHaveLength(1)
   })
 })

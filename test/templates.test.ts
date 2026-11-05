@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { forbiddenTermJaIn, pruneReleasedSentenceIn } from '../src/policy'
-import { castSuffix, factsTable, fallbackReport, GARDENER_LONG, GARDENER_SHORT_EN, notebookLines, voteAnnouncement, voteResult } from '../src/templates'
-import type { Followup } from '../src/types'
+import { castSuffix, factsTable, fallbackReport, GARDENER_LONG, GARDENER_SHORT_EN, notebookLines, outlookLines, voteAnnouncement, voteResult } from '../src/templates'
+import type { Followup, Observation } from '../src/types'
 import { sampleFacts } from './fixtures'
 
 describe('the closing sentence', () => {
@@ -61,7 +61,7 @@ describe('factsTable', () => {
   })
 })
 
-describe('notebookLines', () => {
+describe('notebookLines, for a follow-up drafted before its direction was recorded', () => {
   const f: Followup = { observationId: 'obs-5-1', fromEpoch: 5, toEpoch: 6, metric: 'players', before: 3, after: 5, verdict: 'continued' }
   it('states the numbers and the verdict the code computed', () => {
     expect(notebookLines([f], 'en')).toEqual(['Epoch 5 note on players in the Standing: 3 → epoch 6: 5. As expected.'])
@@ -76,6 +76,51 @@ describe('notebookLines', () => {
     expect(ja[1].endsWith('見立てと違う')).toBe(true)
     expect(ja[2].endsWith('横ばい')).toBe(true)
     for (const line of ja) expect(line.endsWith('。')).toBe(false)
+  })
+  it('keeps the old form for a drain too', () => {
+    const drains: Followup = { observationId: 'x', fromEpoch: 5, toEpoch: 6, metric: 'drains', before: 67, after: 70, verdict: 'reversed' }
+    expect(notebookLines([drains], 'en')).toEqual(['Epoch 5 note on drains: 67 → epoch 6: 70. Not as expected.'])
+    expect(notebookLines([drains], 'ja')).toEqual(['シーズン 5 の観察(ドレインの回数): 67 → シーズン 6: 70。見立てと違う'])
+  })
+})
+
+describe('notebookLines, for a follow-up that says what was expected', () => {
+  const f: Followup = { observationId: 'x', fromEpoch: 5, toEpoch: 6, metric: 'drains', direction: 'down', before: 67, after: 70, verdict: 'reversed' }
+  it('says what the earlier epoch expected, then the figures, then the verdict', () => {
+    expect(notebookLines([f], 'en')).toEqual(['Epoch 5 expected drains to fall: 67 → 70. Not as expected.'])
+    expect(notebookLines([f], 'ja')).toEqual(['シーズン 5 の見立て: ドレインの回数は減る。67 → 70。見立てと違う'])
+  })
+  it('puts a space before 「は」 after a name that ends in a Latin letter, and none after one that does not', () => {
+    const line = (metric: Followup['metric']) => notebookLines([{ ...f, metric, direction: 'up' }], 'ja')[0]
+    expect(line('arenaTrees')).toContain('アリーナの Bonsai は増える。')
+    expect(line('seededTrees')).toContain('Crown Seed を付けた Bonsai は増える。')
+    expect(line('bonexpBurned')).toContain('スコアに変換した BONEXP は増える。')
+    expect(line('players')).toContain('ランキングの参加者は増える。')
+  })
+  it('names a held expectation in both languages', () => {
+    const held: Followup = { ...f, metric: 'players', direction: 'flat', before: 3, after: 3, verdict: 'continued' }
+    expect(notebookLines([held], 'en')).toEqual(['Epoch 5 expected players in the Standing to hold: 3 → 3. As expected.'])
+    expect(notebookLines([held], 'ja')).toEqual(['シーズン 5 の見立て: ランキングの参加者は変わらない。3 → 3。見立てどおり'])
+  })
+})
+
+describe('outlookLines', () => {
+  const o = (over: Partial<Observation> = {}): Observation => ({ id: 'o', epoch: 6, metric: 'drains', direction: 'down', baseline: 70, statement: 's', ...over })
+  it('says what is expected next and the figure it starts from', () => {
+    expect(outlookLines([o()], 'en')).toEqual(['Drains to fall (70 this epoch)'])
+    expect(outlookLines([o()], 'ja')).toEqual(['ドレインの回数は減る(今シーズン 70)'])
+  })
+  it('says "hold" and 「変わらない」 for a flat expectation', () => {
+    const flat = o({ metric: 'players', direction: 'flat', baseline: 3 })
+    expect(outlookLines([flat], 'en')).toEqual(['Players in the Standing to hold (3 this epoch)'])
+    expect(outlookLines([flat], 'ja')).toEqual(['ランキングの参加者は変わらない(今シーズン 3)'])
+  })
+  it('has one line per observation, and none when there are none', () => {
+    expect(outlookLines([o(), o({ metric: 'arenaTrees', direction: 'up', baseline: 10 })], 'ja')).toHaveLength(2)
+    expect(outlookLines([], 'en')).toEqual([])
+  })
+  it('leaves the model’s own sentence out', () => {
+    expect(outlookLines([o({ statement: 'Drains will surely collapse.' })], 'en').join('')).not.toContain('collapse')
   })
 })
 

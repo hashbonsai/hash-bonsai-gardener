@@ -32,24 +32,23 @@ function actualDirection(before: number, after: number): Direction {
  * Compares one earlier observation with this epoch's facts. The numbers and
  * the verdict are the code's; the model never grades itself.
  *
- *  - the metric did not move       → `flat`
- *  - it moved the way predicted    → `continued`
- *  - it moved the other way        → `reversed`
+ *  - it moved the way predicted, or a predicted "flat" held   → `continued`
+ *  - an "up" or "down" that did not move                      → `flat`
+ *  - it moved the other way, or a predicted "flat" moved      → `reversed`
  *
- * An observation of "flat" that then moved either way counts as `reversed`:
- * the thing it said would hold did not.
  * Returns null when the metric is unreadable now (nothing to say).
  */
 export function followUp(observation: Observation, facts: Facts): Followup | null {
   const after = metricValue(facts, observation.metric)
   if (after === null) return null
   const moved = actualDirection(observation.baseline, after)
-  const verdict: Verdict = moved === 'flat' ? 'flat' : moved === observation.direction ? 'continued' : 'reversed'
+  const verdict: Verdict = moved === observation.direction ? 'continued' : moved === 'flat' ? 'flat' : 'reversed'
   return {
     observationId: observation.id,
     fromEpoch: observation.epoch,
     toEpoch: facts.epoch,
     metric: observation.metric,
+    direction: observation.direction,
     before: observation.baseline,
     after,
     verdict,

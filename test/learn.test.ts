@@ -43,12 +43,20 @@ describe('followUp', () => {
     expect(followUp(obs(), next({ players: 3 }))?.verdict).toBe('reversed')
     expect(followUp(obs({ direction: 'down' }), next({ players: 30 }))?.verdict).toBe('reversed')
   })
-  it('says flat when it did not move, whatever was predicted', () => {
+  it('says flat when a predicted rise or fall did not happen', () => {
     expect(followUp(obs(), next({ players: 12 }))?.verdict).toBe('flat')
-    expect(followUp(obs({ direction: 'flat' }), next({ players: 12 }))?.verdict).toBe('flat')
+    expect(followUp(obs({ direction: 'down' }), next({ players: 12 }))?.verdict).toBe('flat')
+  })
+  it('says continued when a predicted "flat" held', () => {
+    expect(followUp(obs({ direction: 'flat' }), next({ players: 12 }))?.verdict).toBe('continued')
   })
   it('counts a predicted "flat" that then moved as reversed', () => {
     expect(followUp(obs({ direction: 'flat' }), next({ players: 13 }))?.verdict).toBe('reversed')
+    expect(followUp(obs({ direction: 'flat' }), next({ players: 11 }))?.verdict).toBe('reversed')
+  })
+  it('carries the direction that was predicted', () => {
+    expect(followUp(obs({ direction: 'down' }), next({ players: 20 }))?.direction).toBe('down')
+    expect(followUp(obs({ direction: 'flat' }), next({ players: 12 }))?.direction).toBe('flat')
   })
   it('returns null when the metric is unreadable now', () => {
     expect(followUp(obs(), next({ players: null }))).toBeNull()
