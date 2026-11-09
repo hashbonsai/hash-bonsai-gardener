@@ -148,6 +148,14 @@ prompts/system.md                  the model's instructions (their hash is store
 test/                              unit tests; test/fixtures/chain holds real mainnet responses with addresses replaced
 ```
 
+## Future work
+
+Not built yet. The memory grows with every epoch, and each report names the one before it, so the whole
+history can be read back from Walrus. With enough epochs the gardener could look for trends across many of
+them, such as a decline that has lasted several epochs or one epoch far from the rest, and say so. Any such
+claim would have to pass the same check as today's figures: a number the commentary uses must match the
+recorded facts. To keep the prompt short, older epochs could be folded into a summary stored in the memory.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
